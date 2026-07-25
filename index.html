@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>브롤스타즈 트레이닝 (디노)</title>
+    <title>브롤스타즈 트레이닝 (디노 - 스나이퍼 하드모드)</title>
     
-    <!-- 모바일 주소창 숨기기 및 앱 전체화면 설정 (PWA) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f0f13">
@@ -24,7 +23,7 @@
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             width: 100vw;
-            height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             display: flex;
             align-items: center;
@@ -45,26 +44,26 @@
         }
         h1 {
             margin: 0 0 10px 0;
-            font-size: 32px;
+            font-size: 26px;
             color: #ffd700;
             text-shadow: 0 4px 10px rgba(0,0,0,0.6);
             letter-spacing: 1px;
         }
         .subtitle {
             color: #a4b0be;
-            font-size: 15px;
-            margin-bottom: 30px;
+            font-size: 13px;
+            margin-bottom: 24px;
         }
         .btn-group {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
             width: 100%;
             max-width: 280px;
         }
         .main-btn {
-            padding: 16px 24px;
-            font-size: 17px;
+            padding: 14px 20px;
+            font-size: 15px;
             font-weight: 800;
             border: none;
             border-radius: 14px;
@@ -75,21 +74,28 @@
         }
         .btn-dodge { background: linear-gradient(135deg, #ff4757, #ff6b81); }
         .btn-aim { background: linear-gradient(135deg, #2ed573, #7bed9f); }
+        .btn-hard { background: linear-gradient(135deg, #ff4757, #ffa502); border: 2px solid #ffd700; }
         .main-btn:active { transform: scale(0.96); }
 
         /* 게임 창 */
         #game-container {
             position: relative;
-            width: 94vw;
-            height: 90vh;
+            width: 100vw;
+            height: 100dvh;
             max-width: 1100px;
             max-height: 700px;
             background-color: #1e272e;
-            border: 5px solid #3d3d5c;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.7);
             display: none;
             overflow: hidden;
+        }
+        @media (min-width: 768px) {
+            #game-container {
+                width: 94vw;
+                height: 90vh;
+                border: 5px solid #3d3d5c;
+                border-radius: 20px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+            }
         }
         #game-container.active {
             display: block;
@@ -106,9 +112,9 @@
         /* 상단 UI 패널 */
         #ui-panel {
             position: absolute;
-            top: 15px;
-            left: 20px;
-            right: 20px;
+            top: 12px;
+            left: 15px;
+            right: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -117,15 +123,15 @@
         }
         .hud-group {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
         .hud-badge {
             background: rgba(0, 0, 0, 0.65);
             backdrop-filter: blur(4px);
-            padding: 8px 16px;
-            border-radius: 12px;
+            padding: 6px 12px;
+            border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.15);
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 800;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
@@ -136,87 +142,87 @@
 
         .btn-back {
             position: absolute;
-            top: 15px;
-            left: 20px;
-            padding: 8px 16px;
-            font-size: 13px;
+            top: 12px;
+            left: 15px;
+            padding: 6px 12px;
+            font-size: 12px;
             font-weight: bold;
             background-color: rgba(0, 0, 0, 0.6);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             z-index: 10;
-            transition: 0.15s;
         }
-        .btn-back:active { transform: scale(0.94); }
 
         .guide {
             position: absolute;
-            bottom: 12px;
+            bottom: 8px;
             width: 100%;
             text-align: center;
-            font-size: 13px;
+            font-size: 11px;
             color: rgba(255, 255, 255, 0.6);
             text-shadow: 1px 1px 2px #000;
             pointer-events: none;
             z-index: 5;
         }
 
-        /* 브롤 전용 내장 AI 피드백 모달 */
+        /* AI 피드백 모달 */
         #ai-modal {
             position: absolute;
             inset: 0;
-            background: rgba(11, 19, 43, 0.88);
+            background: rgba(11, 19, 43, 0.92);
             backdrop-filter: blur(10px);
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 100;
-            padding: 30px;
-            text-align: center;
+            padding: 16px;
+            overflow-y: auto;
         }
         .ai-card {
             background: #1e272e;
             border: 3px solid #ffd700;
-            border-radius: 20px;
-            padding: 25px 30px;
-            max-width: 460px;
+            border-radius: 16px;
+            padding: 18px 20px;
+            max-width: 420px;
             width: 100%;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            margin: auto;
         }
         .ai-title {
             color: #ffd700;
-            font-size: 21px;
+            font-size: 18px;
             font-weight: 900;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+            text-align: center;
         }
         .ai-content {
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 13px;
+            line-height: 1.5;
             color: #f1f2f6;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             background: rgba(0,0,0,0.4);
-            padding: 16px;
-            border-radius: 12px;
+            padding: 12px;
+            border-radius: 10px;
             border-left: 4px solid #ffd700;
             text-align: left;
-            max-height: 220px;
+            max-height: 150px;
             overflow-y: auto;
         }
         .ai-btn-group {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             justify-content: center;
         }
         .ai-btn {
-            padding: 10px 20px;
+            padding: 10px 18px;
             border-radius: 10px;
             font-weight: bold;
             border: none;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
         }
         .btn-retry { background: #2ed573; color: white; }
         .btn-home { background: #747d8c; color: white; }
@@ -226,17 +232,16 @@
 </head>
 <body>
 
-    <!-- 메인 메뉴 -->
     <div id="menu">
         <h1>브롤스타즈 트레이닝 (디노)</h1>
-        <div class="subtitle">브롤 전용 내장 AI 코칭 시스템 활성화 완료!</div>
+        <div class="subtitle">지그재그 무빙 AI 타겟 추가 완료!</div>
         <div class="btn-group">
             <button class="main-btn btn-dodge" onclick="startGame('dodge')">무빙 훈련 (회피)</button>
-            <button class="main-btn btn-aim" onclick="startGame('aim')">저격 에임 훈련 (사격)</button>
+            <button class="main-btn btn-aim" onclick="startGame('aim')">저격 에임 훈련 (일반)</button>
+            <button class="main-btn btn-hard" onclick="startGame('sniper_hard')">🎯 스나이퍼 하드모드 (급부스터 무빙)</button>
         </div>
     </div>
 
-    <!-- 게임 화면 -->
     <div id="game-container">
         <button class="btn-back" onclick="returnToMenu()">메뉴로</button>
         
@@ -254,7 +259,6 @@
         <canvas id="canvas"></canvas>
         <div class="guide" id="guide-text">조작 가이드</div>
 
-        <!-- 브롤 전용 AI 피드백 모달 -->
         <div id="ai-modal">
             <div class="ai-card">
                 <div class="ai-title">🤖 브롤스타즈 AI 전용 코치</div>
@@ -290,36 +294,12 @@
         let gameTime = 0;
 
         function getDifficulty() {
-            return Math.min(3.5, 1 + score / 250);
+            return Math.min(4.0, 1 + score / 200);
         }
 
-        let player = {
-            x: 0,
-            y: 0,
-            radius: 18,
-            speed: 4.5,
-            color: '#1e90ff'
-        };
-
-        let joystick = {
-            active: false,
-            pointerId: null,
-            startX: 0,
-            startY: 0,
-            currentX: 0,
-            currentY: 0,
-            maxDist: 45
-        };
-
-        let aimStick = {
-            active: false,
-            pointerId: null,
-            startX: 0,
-            startY: 0,
-            currentX: 0,
-            currentY: 0
-        };
-
+        let player = { x: 0, y: 0, radius: 18, speed: 4.5, color: '#1e90ff' };
+        let joystick = { active: false, pointerId: null, startX: 0, startY: 0, currentX: 0, currentY: 0, maxDist: 45 };
+        let aimStick = { active: false, pointerId: null, startX: 0, startY: 0, currentX: 0, currentY: 0 };
         let entities = []; 
         let bullets = [];  
         let spawnCounter = 0;
@@ -346,7 +326,7 @@
                     joystick.currentX = pos.x;
                     joystick.currentY = pos.y;
                 }
-            } else if (currentMode === 'aim') {
+            } else if (currentMode === 'aim' || currentMode === 'sniper_hard') {
                 if (!aimStick.active && ammo > 0) {
                     aimStick.active = true;
                     aimStick.pointerId = e.pointerId;
@@ -387,7 +367,7 @@
             }
 
             if (aimStick.active && e.pointerId === aimStick.pointerId) {
-                if (currentMode === 'aim' && ammo > 0) {
+                if ((currentMode === 'aim' || currentMode === 'sniper_hard') && ammo > 0) {
                     let dx = aimStick.currentX - aimStick.startX;
                     let dy = aimStick.currentY - aimStick.startY;
                     let dist = Math.hypot(dx, dy);
@@ -397,11 +377,11 @@
                         bullets.push({
                             x: player.x,
                             y: player.y,
-                            vx: Math.cos(angle) * 13,
-                            vy: Math.sin(angle) * 13,
+                            vx: Math.cos(angle) * 14,
+                            vy: Math.sin(angle) * 14,
                             radius: 7,
                             distanceTraveled: 0,
-                            maxDistance: Math.max(canvas.width, canvas.height) * 0.8
+                            maxDistance: Math.max(canvas.width, canvas.height) * 0.9
                         });
                         ammo--;
                     }
@@ -432,9 +412,11 @@
             gameRunning = true;
 
             if (currentMode === 'dodge') {
-                guideText.innerText = "[무빙 훈련] 화면을 드래그해 사방에서 날아오는 탄환을 회피하세요!";
+                guideText.innerText = "[무빙 훈련] 화면을 드래그해 탄환을 회피하세요!";
+            } else if (currentMode === 'aim') {
+                guideText.innerText = "[저격 일반] 드래그 후 손을 떼어 사격!";
             } else {
-                guideText.innerText = "[저격 에임 훈련] 제자리 고정! 화면을 드래그한 후 손을 떼어 저격 발사!";
+                guideText.innerText = "[스나이퍼 하드모드] 급부스터 지그재그 무빙 AI 저격!";
             }
 
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -455,23 +437,17 @@
 
         function generateBrawlAIFeedback(mode, score, survivalSeconds) {
             let feedback = "";
-            
-            if (mode === 'dodge') {
-                if (score < 100) {
-                    feedback = `[AI 분석 결과: 브론즈 구간]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"어이쿠! 적의 평타를 일직선으로 맞아버렸네요. 맵의 넓은 공간을 활용하지 못하고 구석으로 몰리는 버릇이 있어요. 상대 탄환이 날아오는 궤도를 보고 무빙 스틱을 대각선으로 살짝 꺾는 '와리가리 무빙'을 연습해 보세요!"`;
-                } else if (score < 350) {
-                    feedback = `[AI 분석 결과: 다이아몬드 구간]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"나쁘지 않은 무빙 감각이에요! 하지만 후반부에 속도가 빨라질 때 당황해서 동선이 좁아지는 게 패인입니다. 조금 더 여유를 갖고 넓은 원을 그리며 도망쳐보세요."`;
+            if (mode === 'sniper_hard') {
+                if (score < 300) {
+                    feedback = `[AI 분석 결과: 하드모드 입문]\n- 점수: ${score}점\n\n"하드모드 AI의 급발진 무빙에 당황하셨군요! 상대의 이동 경로를 예측해서 미리 에임을 두는 '리드 샷' 연습이 필수적입니다."`;
+                } else if (score < 800) {
+                    feedback = `[AI 분석 결과: 하드모드 고수]\n- 점수: ${score}점\n\n"와우! 날렵하게 피하는 AI를 상대로 엄청난 명중률을 보여주셨네요. 탑 랭커 수준의 에임 감각입니다!"`;
                 } else {
-                    feedback = `[AI 분석 결과: 마스터/그랜드마스터 구간]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"와, 미친 반응 속도인데요?! 이 정도면 프로 챔피언십 나가셔도 되겠습니다. 완벽한 회피 기동이었어요!"`;
+                    feedback = `[AI 분석 결과: 브롤스타즈 에임 신(God)]\n- 점수: ${score}점\n\n"전설적인 스나이퍼 실력! AI가 무빙을 쳐도 절대 피할 수 없는 완벽한 예측 샷이었습니다!"`;
                 }
             } else {
-                if (score < 250) {
-                    feedback = `[AI 분석 결과: 에임 초보]\n- 점수: ${score}점\n\n"아쉽습니다! 제자리에 가만히 서서 쏘려다 보니 적에게 노출되었네요. 적의 이동 예측샷(리드 샷) 감각을 익히고, 탄환이 없을 때 무리하게 나가지 않는 탄창 관리(재장전 타이밍)를 신경 쓰세요!"`;
-                } else {
-                    feedback = `[AI 분석 결과: 저격수 장인]\n- 점수: ${score}점\n\n"캬, 백발백중 저격 실력이네요! 적의 무빙 예측과 깔끔한 플릭 샷이 아주 환상적이었습니다. 파이퍼나 파이크 유저로 합격!"`;
-                }
+                feedback = `[AI 전투 분석 완료]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"좋은 플레이였습니다! 더 완벽한 반응 속도를 위해 하드모드에도 도전해 보세요."`;
             }
-
             aiFeedbackText.innerText = feedback;
             aiModal.style.display = 'flex';
         }
@@ -481,7 +457,7 @@
             cancelAnimationFrame(animationFrameId);
             const survivalSeconds = Math.floor(gameTime / 60);
             
-            aiFeedbackText.innerText = "브롤 AI 코치가 당신의 매치 리플레이를 분석 중입니다...";
+            aiFeedbackText.innerText = "브롤 AI 코치가 하드모드 매치를 정밀 분석 중입니다...";
             aiModal.style.display = 'flex';
             
             setTimeout(() => {
@@ -516,9 +492,9 @@
                 }
             }
 
-            if (currentMode === 'aim' && ammo < 3) {
+            if ((currentMode === 'aim' || currentMode === 'sniper_hard') && ammo < 3) {
                 ammoRegenTimer++;
-                if (ammoRegenTimer >= 80) {
+                if (ammoRegenTimer >= (currentMode === 'sniper_hard' ? 70 : 80)) {
                     ammo++;
                     ammoRegenTimer = 0;
                 }
@@ -552,46 +528,59 @@
                     if (dist < player.radius + b.radius) {
                         entities.splice(i, 1);
                         lives--;
-                        if (lives <= 0) {
-                            triggerGameOver();
-                            return;
-                        }
+                        if (lives <= 0) { triggerGameOver(); return; }
                     } else if (b.x < -40 || b.x > canvas.width + 40 || b.y < -40 || b.y > canvas.height + 40) {
                         entities.splice(i, 1);
                         score += 10;
                     }
                 }
-
-            } else if (currentMode === 'aim') {
-                const spawnInterval = Math.max(20, Math.round(60 / difficulty));
-                if (spawnCounter <= 0 && entities.length < 5) {
+            } else if (currentMode === 'aim' || currentMode === 'sniper_hard') {
+                const maxEntities = currentMode === 'sniper_hard' ? 3 : 5;
+                const spawnInterval = currentMode === 'sniper_hard' ? Math.max(15, Math.round(45 / difficulty)) : Math.max(20, Math.round(60 / difficulty));
+                
+                if (spawnCounter <= 0 && entities.length < maxEntities) {
                     spawnCounter = spawnInterval;
-                    let ex = Math.random() < 0.5 ? 60 : canvas.width - 60;
-                    let ey = Math.random() * (canvas.height - 150) + 80;
+                    let ex = Math.random() * (canvas.width - 120) + 60;
+                    let ey = Math.random() * (canvas.height - 180) + 90;
                     entities.push({
                         x: ex, y: ey,
-                        vx: (Math.random() - 0.5) * 2.2 * difficulty,
-                        vy: (Math.random() - 0.5) * 2.2 * difficulty,
-                        radius: 20,
-                        lifeTime: 0
+                        vx: (Math.random() - 0.5) * 3,
+                        vy: (Math.random() - 0.5) * 3,
+                        radius: currentMode === 'sniper_hard' ? 16 : 20,
+                        lifeTime: 0,
+                        changeTimer: 0
                     });
                 }
 
                 for (let i = entities.length - 1; i >= 0; i--) {
                     let target = entities[i];
+                    
+                    // 하드모드 전용 지그재그 AI 무빙 로직
+                    if (currentMode === 'sniper_hard') {
+                        target.changeTimer++;
+                        // 25프레임마다 급격하게 속도와 방향을 바꾸는 '와리가리 무빙'
+                        if (target.changeTimer > 22 + Math.random() * 15) {
+                            let speedBoost = (2.5 + Math.random() * 2.5) * difficulty;
+                            let angle = Math.random() * Math.PI * 2;
+                            target.vx = Math.cos(angle) * speedBoost;
+                            target.vy = Math.sin(angle) * speedBoost;
+                            target.changeTimer = 0;
+                        }
+                    }
+
                     target.x += target.vx;
                     target.y += target.vy;
-                    if (target.x < 40 || target.x > canvas.width - 40) target.vx *= -1;
-                    if (target.y < 60 || target.y > canvas.height - 40) target.vy *= -1;
+
+                    // 벽에 부딪히면 튕기기
+                    if (target.x < 40 || target.x > canvas.width - 40) { target.vx *= -1; target.x = Math.max(40, Math.min(canvas.width - 40, target.x)); }
+                    if (target.y < 70 || target.y > canvas.height - 40) { target.vy *= -1; target.y = Math.max(70, Math.min(canvas.height - 40, target.y)); }
 
                     target.lifeTime++;
-                    if (target.lifeTime > 260) {
+                    let maxLife = currentMode === 'sniper_hard' ? 180 : 260;
+                    if (target.lifeTime > maxLife) {
                         entities.splice(i, 1);
                         lives--;
-                        if (lives <= 0) {
-                            triggerGameOver();
-                            return;
-                        }
+                        if (lives <= 0) { triggerGameOver(); return; }
                     }
                 }
 
@@ -613,7 +602,7 @@
                     if (hitIndex !== -1) {
                         entities.splice(hitIndex, 1);
                         bullets.splice(i, 1);
-                        score += 150;
+                        score += currentMode === 'sniper_hard' ? 250 : 150;
                     } else if (bullet.distanceTraveled >= bullet.maxDistance || bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
                         bullets.splice(i, 1);
                     }
@@ -644,7 +633,7 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            if (currentMode === 'aim' && aimStick.active) {
+            if ((currentMode === 'aim' || currentMode === 'sniper_hard') && aimStick.active) {
                 let dx = aimStick.currentX - aimStick.startX;
                 let dy = aimStick.currentY - aimStick.startY;
                 let dist = Math.hypot(dx, dy);
@@ -652,8 +641,8 @@
                     let angle = Math.atan2(dy, dx);
                     ctx.beginPath();
                     ctx.moveTo(player.x, player.y);
-                    ctx.lineTo(player.x + Math.cos(angle) * 320, player.y + Math.sin(angle) * 320);
-                    ctx.strokeStyle = 'rgba(255, 234, 167, 0.7)';
+                    ctx.lineTo(player.x + Math.cos(angle) * 350, player.y + Math.sin(angle) * 350);
+                    ctx.strokeStyle = currentMode === 'sniper_hard' ? 'rgba(255, 107, 107, 0.75)' : 'rgba(255, 234, 167, 0.7)';
                     ctx.lineWidth = 4;
                     ctx.setLineDash([8, 6]);
                     ctx.stroke();
@@ -662,12 +651,13 @@
                 }
             }
 
+            // 플레이어 그리기 (하드모드는 주황빛 테두리)
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.fillStyle = (currentMode === 'aim' && aimStick.active) ? '#70a1ff' : player.color;
+            ctx.fillStyle = currentMode === 'sniper_hard' ? '#ff4757' : player.color;
             ctx.fill();
             ctx.lineWidth = 3;
-            ctx.strokeStyle = '#ffffff';
+            ctx.strokeStyle = currentMode === 'sniper_hard' ? '#ffa502' : '#ffffff';
             ctx.stroke();
             ctx.closePath();
 
@@ -679,11 +669,11 @@
                     ctx.fill();
                     ctx.closePath();
                 }
-            } else if (currentMode === 'aim') {
+            } else if (currentMode === 'aim' || currentMode === 'sniper_hard') {
                 for (let t of entities) {
                     ctx.beginPath();
                     ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ff6b81';
+                    ctx.fillStyle = currentMode === 'sniper_hard' ? '#ffa502' : '#ff6b81';
                     ctx.fill();
                     ctx.lineWidth = 3;
                     ctx.strokeStyle = '#ffffff';
@@ -721,12 +711,12 @@
                 ctx.closePath();
             }
 
-            if (currentMode === 'aim' && aimStick.active) {
+            if ((currentMode === 'aim' || currentMode === 'sniper_hard') && aimStick.active) {
                 ctx.beginPath();
                 ctx.arc(aimStick.startX, aimStick.startY, 42, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(46, 213, 115, 0.12)';
+                ctx.fillStyle = 'rgba(255, 107, 107, 0.12)';
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(46, 213, 115, 0.25)';
+                ctx.strokeStyle = 'rgba(255, 107, 107, 0.25)';
                 ctx.stroke();
                 ctx.closePath();
 
@@ -738,7 +728,7 @@
 
                 ctx.beginPath();
                 ctx.arc(stickX, stickY, 20, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(46, 213, 115, 0.55)';
+                ctx.fillStyle = currentMode === 'sniper_hard' ? 'rgba(255, 71, 87, 0.65)' : 'rgba(46, 213, 115, 0.55)';
                 ctx.fill();
                 ctx.closePath();
             }
