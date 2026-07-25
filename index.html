@@ -30,7 +30,6 @@
             justify-content: center;
         }
 
-        /* 메인 메뉴 화면 */
         #menu {
             display: flex;
             flex-direction: column;
@@ -77,7 +76,6 @@
         .btn-hard { background: linear-gradient(135deg, #ff4757, #ffa502); border: 2px solid #ffd700; }
         .main-btn:active { transform: scale(0.96); }
 
-        /* 게임 창 */
         #game-container {
             position: relative;
             width: 100vw;
@@ -109,7 +107,6 @@
             background-color: #2f3542;
         }
 
-        /* 상단 UI 패널 */
         #ui-panel {
             position: absolute;
             top: 12px;
@@ -167,7 +164,6 @@
             z-index: 5;
         }
 
-        /* AI 피드백 모달 */
         #ai-modal {
             position: absolute;
             inset: 0;
@@ -234,11 +230,11 @@
 
     <div id="menu">
         <h1>브롤스타즈 트레이닝 (디노)</h1>
-        <div class="subtitle">지그재그 무빙 AI 타겟 추가 완료!</div>
+        <div class="subtitle">극한의 손가락 피지컬 및 고속 무빙 훈련 버전</div>
         <div class="btn-group">
             <button class="main-btn btn-dodge" onclick="startGame('dodge')">무빙 훈련 (회피)</button>
             <button class="main-btn btn-aim" onclick="startGame('aim')">저격 에임 훈련 (일반)</button>
-            <button class="main-btn btn-hard" onclick="startGame('sniper_hard')">🎯 스나이퍼 하드모드 (급부스터 무빙)</button>
+            <button class="main-btn btn-hard" onclick="startGame('sniper_hard')">🎯 스나이퍼 하드모드 (극악 피지컬)</button>
         </div>
     </div>
 
@@ -294,10 +290,10 @@
         let gameTime = 0;
 
         function getDifficulty() {
-            return Math.min(4.0, 1 + score / 200);
+            return Math.min(4.5, 1 + score / 180);
         }
 
-        let player = { x: 0, y: 0, radius: 18, speed: 4.5, color: '#1e90ff' };
+        let player = { x: 0, y: 0, radius: 18, speed: 5.0, color: '#1e90ff' };
         let joystick = { active: false, pointerId: null, startX: 0, startY: 0, currentX: 0, currentY: 0, maxDist: 45 };
         let aimStick = { active: false, pointerId: null, startX: 0, startY: 0, currentX: 0, currentY: 0 };
         let entities = []; 
@@ -372,16 +368,17 @@
                     let dy = aimStick.currentY - aimStick.startY;
                     let dist = Math.hypot(dx, dy);
 
-                    if (dist > 15) {
+                    if (dist > 12) {
                         let angle = Math.atan2(dy, dx);
+                        let bulletSpeed = currentMode === 'sniper_hard' ? 16 : 14;
                         bullets.push({
                             x: player.x,
                             y: player.y,
-                            vx: Math.cos(angle) * 14,
-                            vy: Math.sin(angle) * 14,
-                            radius: 7,
+                            vx: Math.cos(angle) * bulletSpeed,
+                            vy: Math.sin(angle) * bulletSpeed,
+                            radius: currentMode === 'sniper_hard' ? 6 : 7,
                             distanceTraveled: 0,
-                            maxDistance: Math.max(canvas.width, canvas.height) * 0.9
+                            maxDistance: Math.max(canvas.width, canvas.height) * 0.95
                         });
                         ammo--;
                     }
@@ -412,11 +409,11 @@
             gameRunning = true;
 
             if (currentMode === 'dodge') {
-                guideText.innerText = "[무빙 훈련] 화면을 드래그해 탄환을 회피하세요!";
+                guideText.innerText = "[무빙 훈련] 극한의 반응 속도로 탄환을 회피하세요!";
             } else if (currentMode === 'aim') {
-                guideText.innerText = "[저격 일반] 드래그 후 손을 떼어 사격!";
+                guideText.innerText = "[저격 일반] 신속하고 정확한 에어밍 연습!";
             } else {
-                guideText.innerText = "[스나이퍼 하드모드] 급부스터 지그재그 무빙 AI 저격!";
+                guideText.innerText = "[스나이퍼 하드모드] 고속 변칙 와리가리 피지컬 훈련!";
             }
 
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -438,15 +435,15 @@
         function generateBrawlAIFeedback(mode, score, survivalSeconds) {
             let feedback = "";
             if (mode === 'sniper_hard') {
-                if (score < 300) {
-                    feedback = `[AI 분석 결과: 하드모드 입문]\n- 점수: ${score}점\n\n"하드모드 AI의 급발진 무빙에 당황하셨군요! 상대의 이동 경로를 예측해서 미리 에임을 두는 '리드 샷' 연습이 필수적입니다."`;
-                } else if (score < 800) {
-                    feedback = `[AI 분석 결과: 하드모드 고수]\n- 점수: ${score}점\n\n"와우! 날렵하게 피하는 AI를 상대로 엄청난 명중률을 보여주셨네요. 탑 랭커 수준의 에임 감각입니다!"`;
+                if (score < 400) {
+                    feedback = `[피지컬 분석: 하드모드 수련생]\n- 점수: ${score}점\n\n"변칙적인 AI의 무빙 타이밍에 손가락 반응이 조금 늦었습니다. 에임을 미리 고정하지 말고 드래그 스냅 속도를 높여보세요!"`;
+                } else if (score < 1000) {
+                    feedback = `[피지컬 분석: 하드모드 상위권]\n- 점수: ${score}점\n\n"훌륭한 손가락 반사 신경입니다! 고속 무빙을 추적하는 에임 스냅이 매우 날카로워졌습니다."`;
                 } else {
-                    feedback = `[AI 분석 결과: 브롤스타즈 에임 신(God)]\n- 점수: ${score}점\n\n"전설적인 스나이퍼 실력! AI가 무빙을 쳐도 절대 피할 수 없는 완벽한 예측 샷이었습니다!"`;
+                    feedback = `[피지컬 분석: 월드 챔피언 급 피지컬]\n- 점수: ${score}점\n\n"경이로운 반응 속도! 미친 듯이 도망치는 AI마저 완벽하게 도륙내는 최상위권 피지컬입니다!"`;
                 }
             } else {
-                feedback = `[AI 전투 분석 완료]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"좋은 플레이였습니다! 더 완벽한 반응 속도를 위해 하드모드에도 도전해 보세요."`;
+                feedback = `[전투 피지컬 분석 완료]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"안정적인 무빙과 에임입니다. 더 높은 자극을 위해 하드모드에 도전해 손가락 한계에 부딪혀 보세요."`;
             }
             aiFeedbackText.innerText = feedback;
             aiModal.style.display = 'flex';
@@ -457,7 +454,7 @@
             cancelAnimationFrame(animationFrameId);
             const survivalSeconds = Math.floor(gameTime / 60);
             
-            aiFeedbackText.innerText = "브롤 AI 코치가 하드모드 매치를 정밀 분석 중입니다...";
+            aiFeedbackText.innerText = "브롤 AI 코치가 피지컬 데이터를 정밀 연산 중입니다...";
             aiModal.style.display = 'flex';
             
             setTimeout(() => {
@@ -494,7 +491,7 @@
 
             if ((currentMode === 'aim' || currentMode === 'sniper_hard') && ammo < 3) {
                 ammoRegenTimer++;
-                if (ammoRegenTimer >= (currentMode === 'sniper_hard' ? 70 : 80)) {
+                if (ammoRegenTimer >= (currentMode === 'sniper_hard' ? 60 : 75)) {
                     ammo++;
                     ammoRegenTimer = 0;
                 }
@@ -503,7 +500,7 @@
             spawnCounter--;
 
             if (currentMode === 'dodge') {
-                const spawnInterval = Math.max(8, Math.round(28 / difficulty));
+                const spawnInterval = Math.max(6, Math.round(24 / difficulty));
                 if (spawnCounter <= 0) {
                     spawnCounter = spawnInterval;
                     let side = Math.floor(Math.random() * 4);
@@ -514,7 +511,7 @@
                     else { x = canvas.width; y = Math.random() * canvas.height; }
 
                     let angle = Math.atan2(player.y - y, player.x - x);
-                    let speed = (2.8 + Math.random() * 1.8) * difficulty;
+                    let speed = (3.2 + Math.random() * 2.0) * difficulty;
 
                     entities.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, radius: 9 });
                 }
@@ -535,8 +532,8 @@
                     }
                 }
             } else if (currentMode === 'aim' || currentMode === 'sniper_hard') {
-                const maxEntities = currentMode === 'sniper_hard' ? 3 : 5;
-                const spawnInterval = currentMode === 'sniper_hard' ? Math.max(15, Math.round(45 / difficulty)) : Math.max(20, Math.round(60 / difficulty));
+                const maxEntities = currentMode === 'sniper_hard' ? 4 : 5;
+                const spawnInterval = currentMode === 'sniper_hard' ? Math.max(12, Math.round(38 / difficulty)) : Math.max(18, Math.round(55 / difficulty));
                 
                 if (spawnCounter <= 0 && entities.length < maxEntities) {
                     spawnCounter = spawnInterval;
@@ -544,9 +541,9 @@
                     let ey = Math.random() * (canvas.height - 180) + 90;
                     entities.push({
                         x: ex, y: ey,
-                        vx: (Math.random() - 0.5) * 3,
-                        vy: (Math.random() - 0.5) * 3,
-                        radius: currentMode === 'sniper_hard' ? 16 : 20,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        radius: currentMode === 'sniper_hard' ? 14 : 18,
                         lifeTime: 0,
                         changeTimer: 0
                     });
@@ -555,12 +552,11 @@
                 for (let i = entities.length - 1; i >= 0; i--) {
                     let target = entities[i];
                     
-                    // 하드모드 전용 지그재그 AI 무빙 로직
                     if (currentMode === 'sniper_hard') {
                         target.changeTimer++;
-                        // 25프레임마다 급격하게 속도와 방향을 바꾸는 '와리가리 무빙'
-                        if (target.changeTimer > 22 + Math.random() * 15) {
-                            let speedBoost = (2.5 + Math.random() * 2.5) * difficulty;
+                        // 극악 피지컬용 초고속 변칙 무빙 (방향 급 전환 및 가속)
+                        if (target.changeTimer > 15 + Math.random() * 12) {
+                            let speedBoost = (3.5 + Math.random() * 3.0) * difficulty;
                             let angle = Math.random() * Math.PI * 2;
                             target.vx = Math.cos(angle) * speedBoost;
                             target.vy = Math.sin(angle) * speedBoost;
@@ -571,12 +567,11 @@
                     target.x += target.vx;
                     target.y += target.vy;
 
-                    // 벽에 부딪히면 튕기기
                     if (target.x < 40 || target.x > canvas.width - 40) { target.vx *= -1; target.x = Math.max(40, Math.min(canvas.width - 40, target.x)); }
                     if (target.y < 70 || target.y > canvas.height - 40) { target.vy *= -1; target.y = Math.max(70, Math.min(canvas.height - 40, target.y)); }
 
                     target.lifeTime++;
-                    let maxLife = currentMode === 'sniper_hard' ? 180 : 260;
+                    let maxLife = currentMode === 'sniper_hard' ? 150 : 240;
                     if (target.lifeTime > maxLife) {
                         entities.splice(i, 1);
                         lives--;
@@ -602,7 +597,7 @@
                     if (hitIndex !== -1) {
                         entities.splice(hitIndex, 1);
                         bullets.splice(i, 1);
-                        score += currentMode === 'sniper_hard' ? 250 : 150;
+                        score += currentMode === 'sniper_hard' ? 300 : 150;
                     } else if (bullet.distanceTraveled >= bullet.maxDistance || bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
                         bullets.splice(i, 1);
                     }
@@ -637,21 +632,20 @@
                 let dx = aimStick.currentX - aimStick.startX;
                 let dy = aimStick.currentY - aimStick.startY;
                 let dist = Math.hypot(dx, dy);
-                if (dist > 15) {
+                if (dist > 12) {
                     let angle = Math.atan2(dy, dx);
                     ctx.beginPath();
                     ctx.moveTo(player.x, player.y);
-                    ctx.lineTo(player.x + Math.cos(angle) * 350, player.y + Math.sin(angle) * 350);
-                    ctx.strokeStyle = currentMode === 'sniper_hard' ? 'rgba(255, 107, 107, 0.75)' : 'rgba(255, 234, 167, 0.7)';
+                    ctx.lineTo(player.x + Math.cos(angle) * 380, player.y + Math.sin(angle) * 380);
+                    ctx.strokeStyle = currentMode === 'sniper_hard' ? 'rgba(255, 71, 87, 0.8)' : 'rgba(255, 234, 167, 0.7)';
                     ctx.lineWidth = 4;
-                    ctx.setLineDash([8, 6]);
+                    ctx.setLineDash([6, 4]);
                     ctx.stroke();
                     ctx.setLineDash([]);
                     ctx.closePath();
                 }
             }
 
-            // 플레이어 그리기 (하드모드는 주황빛 테두리)
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = currentMode === 'sniper_hard' ? '#ff4757' : player.color;
