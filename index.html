@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>브롤스타즈 트레이닝 (디노 - 스나이퍼 하드모드)</title>
+    <title>브롤스타즈 트레이닝 (티어별 루틴 포함)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -74,6 +74,7 @@
         .btn-dodge { background: linear-gradient(135deg, #ff4757, #ff6b81); }
         .btn-aim { background: linear-gradient(135deg, #2ed573, #7bed9f); }
         .btn-hard { background: linear-gradient(135deg, #ff4757, #ffa502); border: 2px solid #ffd700; }
+        .btn-routine { background: linear-gradient(135deg, #3742fa, #5352ed); }
         .main-btn:active { transform: scale(0.96); }
 
         #game-container {
@@ -164,7 +165,8 @@
             z-index: 5;
         }
 
-        #ai-modal {
+        /* 팝업 모달 스타일 */
+        .custom-modal {
             position: absolute;
             inset: 0;
             background: rgba(11, 19, 43, 0.92);
@@ -175,69 +177,74 @@
             justify-content: center;
             z-index: 100;
             padding: 16px;
-            overflow-y: auto;
         }
-        .ai-card {
+        .modal-card {
             background: #1e272e;
             border: 3px solid #ffd700;
             border-radius: 16px;
             padding: 18px 20px;
-            max-width: 420px;
+            max-width: 480px;
             width: 100%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            margin: auto;
         }
-        .ai-title {
+        .modal-title {
             color: #ffd700;
             font-size: 18px;
             font-weight: 900;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             text-align: center;
         }
-        .ai-content {
+        .modal-body {
             font-size: 13px;
             line-height: 1.5;
             color: #f1f2f6;
             margin-bottom: 16px;
             background: rgba(0,0,0,0.4);
-            padding: 12px;
+            padding: 14px;
             border-radius: 10px;
             border-left: 4px solid #ffd700;
             text-align: left;
-            max-height: 150px;
             overflow-y: auto;
+            flex-grow: 1;
         }
-        .ai-btn-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        .ai-btn {
-            padding: 10px 18px;
+        .modal-body h4 { color: #7bed9f; margin: 8px 0 4px 0; font-size: 14px; }
+        .modal-body p { margin: 4px 0 10px 0; color: #dfe4ea; }
+
+        .modal-btn {
+            padding: 10px 20px;
             border-radius: 10px;
             font-weight: bold;
             border: none;
             cursor: pointer;
             font-size: 13px;
+            background: #747d8c;
+            color: white;
+            align-self: center;
         }
         .btn-retry { background: #2ed573; color: white; }
-        .btn-home { background: #747d8c; color: white; }
+        .ai-btn-group { display: flex; gap: 10px; justify-content: center; }
 
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
+    <!-- 메인 메뉴 화면 -->
     <div id="menu">
-        <h1>브롤스타즈 트레이닝 (디노)</h1>
-        <div class="subtitle">손가락 피지컬 및 고속 무빙 훈련 버전</div>
+        <h1>브롤스타즈 트레이닝</h1>
+        <div class="subtitle">손가락 피지컬 및 티어별 맞춤 훈련 버전</div>
         <div class="btn-group">
             <button class="main-btn btn-dodge" onclick="startGame('dodge')">무빙 훈련 (회피)</button>
             <button class="main-btn btn-aim" onclick="startGame('aim')">저격 에임 훈련 (일반)</button>
-            <button class="main-btn btn-hard" onclick="startGame('sniper_hard')">🎯 스나이퍼 하드모드 (최적화 버전)</button>
+            <button class="main-btn btn-hard" onclick="startGame('sniper_hard')">🎯 스나이퍼 하드모드</button>
+            <button class="main-btn btn-routine" onclick="openRoutineModal()">📋 티어별 훈련 루틴 보기</button>
         </div>
     </div>
 
+    <!-- 게임 플레이 화면 -->
     <div id="game-container">
         <button class="btn-back" onclick="returnToMenu()">메뉴로</button>
         
@@ -255,15 +262,37 @@
         <canvas id="canvas"></canvas>
         <div class="guide" id="guide-text">조작 가이드</div>
 
-        <div id="ai-modal">
-            <div class="ai-card">
-                <div class="ai-title">🤖 브롤스타즈 AI 전용 코치</div>
-                <div class="ai-content" id="ai-feedback-text">전투 데이터를 분석 중입니다...</div>
+        <!-- 게임 오버 / AI 코치 팝업 -->
+        <div id="ai-modal" class="custom-modal">
+            <div class="modal-card">
+                <div class="modal-title">🤖 브롤스타즈 AI 전용 코치</div>
+                <div class="modal-body" id="ai-feedback-text">전투 데이터를 분석 중입니다...</div>
                 <div class="ai-btn-group">
-                    <button class="ai-btn btn-retry" onclick="restartGame()">다시 도전</button>
-                    <button class="ai-btn btn-home" onclick="returnToMenu()">메뉴로</button>
+                    <button class="modal-btn btn-retry" onclick="restartGame()">다시 도전</button>
+                    <button class="modal-btn" onclick="returnToMenu()">메뉴로</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- 티어별 루틴 안내 팝업 -->
+    <div id="routine-modal" class="custom-modal">
+        <div class="modal-card">
+            <div class="modal-title">🏆 브롤스타즈 티어별 훈련 루틴</div>
+            <div class="modal-body">
+                <h4>🥉 브론즈 ~ 실버 (기초 다지기)</h4>
+                <p>• 무빙 훈련 10분: 절대 멈춰 서서 쏘지 않고 불규칙하게 원 그리며 회피.<br>• 저격 에임 5분: 타격감각 익히기.</p>
+                
+                <h4>🥈 골드 ~ 다이아몬드 (예측샷 & 탄 관리)</h4>
+                <p>• 저격 에임 10분: 적의 이동 경로 앞을 미리 노리는 예측샷 연습.<br>• 무빙 훈련 5분: 피격 면적을 줄이는 가벼운 무빙.</p>
+                
+                <h4>🥇 신화 ~ 마스터 (고급 피지컬)</h4>
+                <p>• 스나이퍼 하드모드 10분: 변칙 무빙 타겟을 향한 에임 스냅(Flick) 단련.<br>• 무빙 훈련 5분: 엄폐물 활용 및 중앙 유지.</p>
+
+                <h4>🏆 레전드 ~ 프로 (하이퍼 피지컬)</h4>
+                <p>• 하드모드 노데스 챌린지: 생명 0개로 1000점 이상 달성 목표.<br>• 실전 브롤러 연계 플레이 직행.</p>
+            </div>
+            <button class="modal-btn" onclick="closeRoutineModal()">닫기</button>
         </div>
     </div>
 
@@ -279,6 +308,7 @@
         const guideText = document.getElementById('guide-text');
         const aiModal = document.getElementById('ai-modal');
         const aiFeedbackText = document.getElementById('ai-feedback-text');
+        const routineModal = document.getElementById('routine-modal');
 
         let currentMode = null;
         let animationFrameId = null;
@@ -289,9 +319,7 @@
         let gameRunning = false;
         let gameTime = 0;
 
-        function getDifficulty() {
-            return Math.min(3.5, 1 + score / 250);
-        }
+        function getDifficulty() { return Math.min(3.5, 1 + score / 250); }
 
         let player = { x: 0, y: 0, radius: 18, speed: 5.0, color: '#1e90ff' };
         let joystick = { active: false, pointerId: null, startX: 0, startY: 0, currentX: 0, currentY: 0, maxDist: 45 };
@@ -300,6 +328,9 @@
         let bullets = [];  
         let spawnCounter = 0;
         let activeTouches = {};
+
+        function openRoutineModal() { routineModal.style.display = 'flex'; }
+        function closeRoutineModal() { routineModal.style.display = 'none'; }
 
         function resizeCanvas() {
             canvas.width = canvas.clientWidth;
@@ -315,39 +346,30 @@
 
             if (currentMode === 'dodge') {
                 if (!joystick.active) {
-                    joystick.active = true;
-                    joystick.pointerId = e.pointerId;
-                    joystick.startX = pos.x;
-                    joystick.startY = pos.y;
-                    joystick.currentX = pos.x;
-                    joystick.currentY = pos.y;
+                    joystick.active = true; joystick.pointerId = e.pointerId;
+                    joystick.startX = pos.x; joystick.startY = pos.y;
+                    joystick.currentX = pos.x; joystick.currentY = pos.y;
                 }
             } else if (currentMode === 'aim' || currentMode === 'sniper_hard') {
                 if (!aimStick.active && ammo > 0) {
-                    aimStick.active = true;
-                    aimStick.pointerId = e.pointerId;
-                    aimStick.startX = pos.x;
-                    aimStick.startY = pos.y;
-                    aimStick.currentX = pos.x;
-                    aimStick.currentY = pos.y;
+                    aimStick.active = true; aimStick.pointerId = e.pointerId;
+                    aimStick.startX = pos.x; aimStick.startY = pos.y;
+                    aimStick.currentX = pos.x; aimStick.currentY = pos.y;
                 }
             }
         });
 
         canvas.addEventListener('pointermove', (e) => {
-            if (!gameRunning) return;
-            if (!activeTouches[e.pointerId]) return;
+            if (!gameRunning || !activeTouches[e.pointerId]) return;
             const rect = canvas.getBoundingClientRect();
             const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
             activeTouches[e.pointerId] = pos;
 
             if (joystick.active && e.pointerId === joystick.pointerId) {
-                joystick.currentX = pos.x;
-                joystick.currentY = pos.y;
+                joystick.currentX = pos.x; joystick.currentY = pos.y;
             }
             if (aimStick.active && e.pointerId === aimStick.pointerId) {
-                aimStick.currentX = pos.x;
-                aimStick.currentY = pos.y;
+                aimStick.currentX = pos.x; aimStick.currentY = pos.y;
             }
         });
 
@@ -356,24 +378,19 @@
 
         function handlePointerEnd(e) {
             delete activeTouches[e.pointerId];
-
             if (joystick.active && e.pointerId === joystick.pointerId) {
-                joystick.active = false;
-                joystick.pointerId = null;
+                joystick.active = false; joystick.pointerId = null;
             }
-
             if (aimStick.active && e.pointerId === aimStick.pointerId) {
                 if ((currentMode === 'aim' || currentMode === 'sniper_hard') && ammo > 0) {
                     let dx = aimStick.currentX - aimStick.startX;
                     let dy = aimStick.currentY - aimStick.startY;
                     let dist = Math.hypot(dx, dy);
-
                     if (dist > 12) {
                         let angle = Math.atan2(dy, dx);
                         let bulletSpeed = currentMode === 'sniper_hard' ? 15 : 14;
                         bullets.push({
-                            x: player.x,
-                            y: player.y,
+                            x: player.x, y: player.y,
                             vx: Math.cos(angle) * bulletSpeed,
                             vy: Math.sin(angle) * bulletSpeed,
                             radius: currentMode === 'sniper_hard' ? 6 : 7,
@@ -383,8 +400,7 @@
                         ammo--;
                     }
                 }
-                aimStick.active = false;
-                aimStick.pointerId = null;
+                aimStick.active = false; aimStick.pointerId = null;
             }
         }
 
@@ -393,36 +409,21 @@
             menu.classList.add('hidden');
             gameContainer.classList.add('active');
             aiModal.style.display = 'none';
-
             resizeCanvas();
 
-            score = 0;
-            lives = 3;
-            ammo = 3;
-            ammoRegenTimer = 0;
-            gameTime = 0;
-            player.x = canvas.width / 2;
-            player.y = canvas.height / 2;
-            entities = [];
-            bullets = [];
-            spawnCounter = 0;
-            gameRunning = true;
+            score = 0; lives = 3; ammo = 3; ammoRegenTimer = 0; gameTime = 0;
+            player.x = canvas.width / 2; player.y = canvas.height / 2;
+            entities = []; bullets = []; spawnCounter = 0; gameRunning = true;
 
-            if (currentMode === 'dodge') {
-                guideText.innerText = "[무빙 훈련] 극한의 반응 속도로 탄환을 회피하세요!";
-            } else if (currentMode === 'aim') {
-                guideText.innerText = "[저격 일반] 신속하고 정확한 에어밍 연습!";
-            } else {
-                guideText.innerText = "[스나이퍼 하드모드] 쾌적하고 밸런스 잡힌 피지컬 훈련!";
-            }
+            if (currentMode === 'dodge') guideText.innerText = "[무빙 훈련] 극한의 반응 속도로 탄환을 회피하세요!";
+            else if (currentMode === 'aim') guideText.innerText = "[저격 일반] 신속하고 정확한 에어밍 연습!";
+            else guideText.innerText = "[스나이퍼 하드모드] 쾌적하고 밸런스 잡힌 피지컬 훈련!";
 
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             gameLoop();
         }
 
-        function restartGame() {
-            startGame(currentMode);
-        }
+        function restartGame() { startGame(currentMode); }
 
         function returnToMenu() {
             gameRunning = false;
@@ -432,33 +433,16 @@
             menu.classList.remove('hidden');
         }
 
-        function generateBrawlAIFeedback(mode, score, survivalSeconds) {
-            let feedback = "";
-            if (mode === 'sniper_hard') {
-                if (score < 400) {
-                    feedback = `[피지컬 분석: 하드모드 수련생]\n- 점수: ${score}점\n\n"조금 더 침착하게 에임을 리드하여 타겟의 이동 경로를 예측해 보세요."`;
-                } else if (score < 1000) {
-                    feedback = `[피지컬 분석: 하드모드 상위권]\n- 점수: ${score}점\n\n"훌륭한 에임 스냅 감각입니다! 타겟의 움직임에 유연하게 대응하고 계시네요."`;
-                } else {
-                    feedback = `[피지컬 분석: 월드 챔피언 급 피지컬]\n- 점수: ${score}점\n\n"완벽한 에임과 반응 속도입니다. 하드모드의 밸런스를 완전히 지배하셨군요!"`;
-                }
-            } else {
-                feedback = `[전투 피지컬 분석 완료]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"안정적인 무빙과 에임입니다. 쾌적해진 하드모드에서 손가락 피지컬을 더 단련해 보세요."`;
-            }
-            aiFeedbackText.innerText = feedback;
-            aiModal.style.display = 'flex';
-        }
-
         function triggerGameOver() {
             gameRunning = false;
             cancelAnimationFrame(animationFrameId);
             const survivalSeconds = Math.floor(gameTime / 60);
-            
             aiFeedbackText.innerText = "브롤 AI 코치가 피지컬 데이터를 정밀 연산 중입니다...";
             aiModal.style.display = 'flex';
             
             setTimeout(() => {
-                generateBrawlAIFeedback(currentMode, score, survivalSeconds);
+                let feedback = `[전투 분석 결과]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"꾸준한 티어별 루틴 훈련이 실력 향상의 지름길입니다!"`;
+                aiFeedbackText.innerText = feedback;
             }, 700);
         }
 
@@ -477,13 +461,11 @@
                 let dx = joystick.currentX - joystick.startX;
                 let dy = joystick.currentY - joystick.startY;
                 let dist = Math.hypot(dx, dy);
-
                 if (dist > 2) {
                     let angle = Math.atan2(dy, dx);
                     let moveDist = Math.min(dist, joystick.maxDist) / joystick.maxDist * player.speed;
                     player.x += Math.cos(angle) * moveDist;
                     player.y += Math.sin(angle) * moveDist;
-
                     player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
                     player.y = Math.max(player.radius + 40, Math.min(canvas.height - player.radius, player.y));
                 }
@@ -491,10 +473,7 @@
 
             if ((currentMode === 'aim' || currentMode === 'sniper_hard') && ammo < 3) {
                 ammoRegenTimer++;
-                if (ammoRegenTimer >= (currentMode === 'sniper_hard' ? 55 : 75)) {
-                    ammo++;
-                    ammoRegenTimer = 0;
-                }
+                if (ammoRegenTimer >= (currentMode === 'sniper_hard' ? 55 : 75)) { ammo++; ammoRegenTimer = 0; }
             }
 
             spawnCounter--;
@@ -512,23 +491,17 @@
 
                     let angle = Math.atan2(player.y - y, player.x - x);
                     let speed = (3.2 + Math.random() * 2.0) * difficulty;
-
                     entities.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, radius: 9 });
                 }
 
                 for (let i = entities.length - 1; i >= 0; i--) {
                     let b = entities[i];
-                    b.x += b.vx;
-                    b.y += b.vy;
-
-                    let dist = Math.hypot(player.x - b.x, player.y - b.y);
-                    if (dist < player.radius + b.radius) {
-                        entities.splice(i, 1);
-                        lives--;
+                    b.x += b.vx; b.y += b.vy;
+                    if (Math.hypot(player.x - b.x, player.y - b.y) < player.radius + b.radius) {
+                        entities.splice(i, 1); lives--;
                         if (lives <= 0) { triggerGameOver(); return; }
                     } else if (b.x < -40 || b.x > canvas.width + 40 || b.y < -40 || b.y > canvas.height + 40) {
-                        entities.splice(i, 1);
-                        score += 10;
+                        entities.splice(i, 1); score += 10;
                     }
                 }
             } else if (currentMode === 'aim' || currentMode === 'sniper_hard') {
@@ -537,24 +510,19 @@
                 
                 if (spawnCounter <= 0 && entities.length < maxEntities) {
                     spawnCounter = spawnInterval;
-                    let ex = Math.random() * (canvas.width - 120) + 60;
-                    let ey = Math.random() * (canvas.height - 180) + 90;
                     entities.push({
-                        x: ex, y: ey,
-                        vx: (Math.random() - 0.5) * 3,
-                        vy: (Math.random() - 0.5) * 3,
+                        x: Math.random() * (canvas.width - 120) + 60,
+                        y: Math.random() * (canvas.height - 180) + 90,
+                        vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3,
                         radius: currentMode === 'sniper_hard' ? 16 : 18,
-                        lifeTime: 0,
-                        changeTimer: 0
+                        lifeTime: 0, changeTimer: 0
                     });
                 }
 
                 for (let i = entities.length - 1; i >= 0; i--) {
                     let target = entities[i];
-                    
                     if (currentMode === 'sniper_hard') {
                         target.changeTimer++;
-                        // 하드모드 속도를 부드럽고 눈에 보이게 완화 (과도하게 빠르지 않도록 조정)
                         if (target.changeTimer > 35 + Math.random() * 20) {
                             let speedBoost = (2.2 + Math.random() * 1.8) * difficulty;
                             let angle = Math.random() * Math.PI * 2;
@@ -563,40 +531,31 @@
                             target.changeTimer = 0;
                         }
                     }
-
-                    target.x += target.vx;
-                    target.y += target.vy;
-
+                    target.x += target.vx; target.y += target.vy;
                     if (target.x < 40 || target.x > canvas.width - 40) { target.vx *= -1; target.x = Math.max(40, Math.min(canvas.width - 40, target.x)); }
                     if (target.y < 70 || target.y > canvas.height - 40) { target.vy *= -1; target.y = Math.max(70, Math.min(canvas.height - 40, target.y)); }
 
                     target.lifeTime++;
-                    let maxLife = currentMode === 'sniper_hard' ? 220 : 240;
-                    if (target.lifeTime > maxLife) {
-                        entities.splice(i, 1);
-                        lives--;
+                    if (target.lifeTime > (currentMode === 'sniper_hard' ? 220 : 240)) {
+                        entities.splice(i, 1); lives--;
                         if (lives <= 0) { triggerGameOver(); return; }
                     }
                 }
 
                 for (let i = bullets.length - 1; i >= 0; i--) {
                     let bullet = bullets[i];
-                    bullet.x += bullet.vx;
-                    bullet.y += bullet.vy;
+                    bullet.x += bullet.vx; bullet.y += bullet.vy;
                     bullet.distanceTraveled += Math.hypot(bullet.vx, bullet.vy);
 
                     let hitIndex = -1;
                     for (let j = 0; j < entities.length; j++) {
-                        let target = entities[j];
-                        if (Math.hypot(bullet.x - target.x, bullet.y - target.y) < bullet.radius + target.radius) {
-                            hitIndex = j;
-                            break;
+                        if (Math.hypot(bullet.x - entities[j].x, bullet.y - entities[j].y) < bullet.radius + entities[j].radius) {
+                            hitIndex = j; break;
                         }
                     }
 
                     if (hitIndex !== -1) {
-                        entities.splice(hitIndex, 1);
-                        bullets.splice(i, 1);
+                        entities.splice(hitIndex, 1); bullets.splice(i, 1);
                         score += currentMode === 'sniper_hard' ? 250 : 150;
                     } else if (bullet.distanceTraveled >= bullet.maxDistance || bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
                         bullets.splice(i, 1);
@@ -606,27 +565,17 @@
 
             scoreBoard.innerText = `점수: ${score}`;
             difficultyBoard.innerText = `속도: x${difficulty.toFixed(1)}`;
-            let ammoStrs = '';
-            for (let i = 0; i < 3; i++) ammoStrs += (i < ammo) ? '🟡' : '⚪';
+            let ammoStrs = ''; for (let i = 0; i < 3; i++) ammoStrs += (i < ammo) ? '🟡' : '⚪';
             ammoBoard.innerText = `탄창: ${ammoStrs}`;
-            
-            let hearts = '';
-            for (let i = 0; i < lives; i++) hearts += '❤️';
+            let hearts = ''; for (let i = 0; i < lives; i++) hearts += '❤️';
             lifeBoard.innerText = `생명: ${hearts}`;
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-            ctx.lineWidth = 1;
-            let gridSize = 50;
-            for (let x = 0; x < canvas.width; x += gridSize) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += gridSize) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-            }
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)'; ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+            for (let y = 0; y < canvas.height; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
 
             if ((currentMode === 'aim' || currentMode === 'sniper_hard') && aimStick.active) {
                 let dx = aimStick.currentX - aimStick.startX;
@@ -634,97 +583,46 @@
                 let dist = Math.hypot(dx, dy);
                 if (dist > 12) {
                     let angle = Math.atan2(dy, dx);
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y);
+                    ctx.beginPath(); ctx.moveTo(player.x, player.y);
                     ctx.lineTo(player.x + Math.cos(angle) * 380, player.y + Math.sin(angle) * 380);
                     ctx.strokeStyle = currentMode === 'sniper_hard' ? 'rgba(255, 71, 87, 0.8)' : 'rgba(255, 234, 167, 0.7)';
-                    ctx.lineWidth = 4;
-                    ctx.setLineDash([6, 4]);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                    ctx.closePath();
+                    ctx.lineWidth = 4; ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]); ctx.closePath();
                 }
             }
 
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = currentMode === 'sniper_hard' ? '#ff4757' : player.color;
-            ctx.fill();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = currentMode === 'sniper_hard' ? '#ffa502' : '#ffffff';
-            ctx.stroke();
-            ctx.closePath();
+            ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = currentMode === 'sniper_hard' ? '#ffa502' : '#ffffff'; ctx.stroke(); ctx.closePath();
 
             if (currentMode === 'dodge') {
                 for (let b of entities) {
-                    ctx.beginPath();
-                    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ff4757';
-                    ctx.fill();
-                    ctx.closePath();
+                    ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); ctx.fillStyle = '#ff4757'; ctx.fill(); ctx.closePath();
                 }
             } else if (currentMode === 'aim' || currentMode === 'sniper_hard') {
                 for (let t of entities) {
-                    ctx.beginPath();
-                    ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+                    ctx.beginPath(); ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
                     ctx.fillStyle = currentMode === 'sniper_hard' ? '#ffa502' : '#ff6b81';
-                    ctx.fill();
-                    ctx.lineWidth = 3;
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.stroke();
-                    ctx.closePath();
+                    ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#ffffff'; ctx.stroke(); ctx.closePath();
                 }
                 for (let bullet of bullets) {
-                    ctx.beginPath();
-                    ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ffd700';
-                    ctx.fill();
-                    ctx.closePath();
+                    ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2); ctx.fillStyle = '#ffd700'; ctx.fill(); ctx.closePath();
                 }
             }
 
             if (currentMode === 'dodge' && joystick.active) {
-                ctx.beginPath();
-                ctx.arc(joystick.startX, joystick.startY, 42, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-                ctx.stroke();
-                ctx.closePath();
-
-                let dx = joystick.currentX - joystick.startX;
-                let dy = joystick.currentY - joystick.startY;
-                let dist = Math.hypot(dx, dy);
+                ctx.beginPath(); ctx.arc(joystick.startX, joystick.startY, 42, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'; ctx.fill(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)'; ctx.stroke(); ctx.closePath();
+                let dx = joystick.currentX - joystick.startX; let dy = joystick.currentY - joystick.startY; let dist = Math.hypot(dx, dy);
                 let stickX = joystick.startX + (dist > joystick.maxDist ? dx / dist * joystick.maxDist : dx);
                 let stickY = joystick.startY + (dist > joystick.maxDist ? dy / dist * joystick.maxDist : dy);
-
-                ctx.beginPath();
-                ctx.arc(stickX, stickY, 20, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-                ctx.fill();
-                ctx.closePath();
+                ctx.beginPath(); ctx.arc(stickX, stickY, 20, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 255, 255, 0.45)'; ctx.fill(); ctx.closePath();
             }
 
             if ((currentMode === 'aim' || currentMode === 'sniper_hard') && aimStick.active) {
-                ctx.beginPath();
-                ctx.arc(aimStick.startX, aimStick.startY, 42, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 107, 107, 0.12)';
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255, 107, 107, 0.25)';
-                ctx.stroke();
-                ctx.closePath();
-
-                let dx = aimStick.currentX - aimStick.startX;
-                let dy = aimStick.currentY - aimStick.startY;
-                let dist = Math.hypot(dx, dy);
+                ctx.beginPath(); ctx.arc(aimStick.startX, aimStick.startY, 42, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 107, 107, 0.12)'; ctx.fill(); ctx.strokeStyle = 'rgba(255, 107, 107, 0.25)'; ctx.stroke(); ctx.closePath();
+                let dx = aimStick.currentX - aimStick.startX; let dy = aimStick.currentY - aimStick.startY; let dist = Math.hypot(dx, dy);
                 let stickX = aimStick.startX + (dist > 45 ? dx / dist * 45 : dx);
                 let stickY = aimStick.startY + (dist > 45 ? dy / dist * 45 : dy);
-
-                ctx.beginPath();
-                ctx.arc(stickX, stickY, 20, 0, Math.PI * 2);
-                ctx.fillStyle = currentMode === 'sniper_hard' ? 'rgba(255, 71, 87, 0.65)' : 'rgba(46, 213, 115, 0.55)';
-                ctx.fill();
-                ctx.closePath();
+                ctx.beginPath(); ctx.arc(stickX, stickY, 20, 0, Math.PI * 2); ctx.fillStyle = currentMode === 'sniper_hard' ? 'rgba(255, 71, 87, 0.65)' : 'rgba(46, 213, 115, 0.55)'; ctx.fill(); ctx.closePath();
             }
         }
     </script>
