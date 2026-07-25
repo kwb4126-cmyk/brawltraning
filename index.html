@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>브롤스타즈 무빙 & 에임 트레이너</title>
+    <title>브롤스타즈 저격수 트레이너</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
+            -webkit-user-select: none;
         }
         body {
             margin: 0;
@@ -56,12 +57,12 @@
             border: 4px solid #57606f;
             border-radius: 12px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-            cursor: crosshair;
+            touch-action: none;
         }
         #ui-panel {
             display: flex;
             justify-content: space-between;
-            width: 600px;
+            width: 700px;
             margin-bottom: 8px;
             font-size: 16px;
             font-weight: bold;
@@ -69,17 +70,23 @@
         .hidden {
             display: none !important;
         }
+        .guide {
+            font-size: 13px;
+            color: #a4b0be;
+            margin-top: 5px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
     <!-- 메인 메뉴 -->
     <div id="menu">
-        <h1>BRAWL TRAINER</h1>
-        <p>원하는 훈련 모드를 선택하세요</p>
+        <h1>BRAWL SNIPER TRAINER</h1>
+        <p>훈련 모드를 선택하세요 (조이스틱 이동 + 저격 에임)</p>
         <div class="btn-group">
             <button class="btn-dodge" onclick="startGame('dodge')">무빙 훈련 (회피)</button>
-            <button class="btn-aim" onclick="startGame('aim')">에임 훈련 (사격)</button>
+            <button class="btn-aim" onclick="startGame('aim')">저격 에임 훈련 (사격)</button>
         </div>
     </div>
 
@@ -87,9 +94,11 @@
     <div id="game-container" class="hidden">
         <div id="ui-panel">
             <span id="score-board">점수: 0</span>
+            <span id="ammo-board">탄창: 🟡🟡🟡</span>
             <span id="life-board">생명: ❤️❤️❤️</span>
         </div>
-        <canvas id="canvas" width="600" height="400"></canvas>
+        <canvas id="canvas" width="700" height="450"></canvas>
+        <div class="guide" id="guide-text">왼쪽 화면 드래그: 이동 조이스틱 / 오른쪽 화면 드래그: 저격 에임 및 발사</div>
         <button class="btn-back" onclick="returnToMenu()">메뉴로 돌아가기</button>
     </div>
 
@@ -99,67 +108,146 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const scoreBoard = document.getElementById('score-board');
+        const ammoBoard = document.getElementById('ammo-board');
         const lifeBoard = document.getElementById('life-board');
+        const guideText = document.getElementById('guide-text');
 
         let currentMode = null;
         let animationFrameId = null;
         let score = 0;
         let lives = 3;
+        let ammo = 3;
+        let ammoRegenTimer = 0;
         let gameRunning = false;
 
-        // 플레이어 객체
+        // 플레이어
         let player = {
-            x: 300,
-            y: 200,
-            radius: 15,
-            speed: 4,
+            x: 350,
+            y: 225,
+            radius: 16,
+            speed: 3.5,
             color: '#1e90ff'
         };
 
-        // 입력 키 상태
-        let keys = { w: false, a: false, s: false, d: false };
+        // 조이스틱 상태 (왼쪽 영역)
+        let joystick = {
+            active: false,
+            startX: 0,
+            startY: 0,
+            currentX: 0,
+            currentY: 0,
+            maxDist: 40
+        };
 
-        // 오브젝트 배열 (탄환 또는 표적)
-        let entities = [];
+        // 저격 에임 상태 (오른쪽 영역)
+        let aimStick = {
+            active: false,
+            startX: 0,
+            startY: 0,
+            currentX: 0,
+            currentY: 0
+        };
+
+        let entities = []; // 무빙 모드의 탄환 또는 에임 모드의 표적
+        let bullets = [];  // 플레이어가 발사한 저격 탄환
         let spawnTimer = 0;
 
-        window.addEventListener('keydown', (e) => {
-            if (['w', 'W', 'ㅈ'].includes(e.key)) keys.w = true;
-            if (['a', 'W', 'ㅁ'].includes(e.key)) keys.a = true; // a키 처리
-            if (e.key.toLowerCase() === 'a') keys.a = true;
-            if (e.key.toLowerCase() === 's') keys.s = true;
-            if (e.key.toLowerCase() === 'd') keys.d = true;
-        });
+        // 터치 및 마우스 입력 관리 (멀티터치/좌우 분할)
+        let activeTouches = {};
 
-        window.addEventListener('keyup', (e) => {
-            if (e.key.toLowerCase() === 'w') keys.w = false;
-            if (e.key.toLowerCase() === 'a') keys.a = false;
-            if (e.key.toLowerCase() === 's') keys.s = false;
-            if (e.key.toLowerCase() === 'd') keys.d = false;
-        });
-
-        // 마우스 클릭 (에임 모드용)
-        canvas.addEventListener('click', (e) => {
-            if (!gameRunning || currentMode !== 'aim') return;
+        function getTouchPos(e) {
             const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
 
-            let hit = false;
-            for (let i = entities.length - 1; i >= 0; i--) {
-                let target = entities[i];
-                let dist = Math.hypot(target.x - mouseX, target.y - mouseY);
-                if (dist <= target.radius) {
-                    entities.splice(i, 1);
-                    score += 100;
-                    hit = true;
-                    break;
+        canvas.addEventListener('pointerdown', (e) => {
+            if (!gameRunning) return;
+            const pos = getTouchPos(e);
+            activeTouches[e.pointerId] = pos;
+
+            // 화면 왼쪽 반은 이동 조이스틱, 오른쪽 반은 에임 조이스틱
+            if (pos.x < canvas.width / 2 && !joystick.active) {
+                joystick.active = true;
+                joystick.startX = pos.x;
+                joystick.startY = pos.y;
+                joystick.currentX = pos.x;
+                joystick.currentY = pos.y;
+            } else if (pos.x >= canvas.width / 2 && !aimStick.active && currentMode === 'aim' && ammo > 0) {
+                aimStick.active = true;
+                aimStick.startX = pos.x;
+                aimStick.startY = pos.y;
+                aimStick.currentX = pos.x;
+                aimStick.currentY = pos.y;
+            }
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!gameRunning) return;
+            if (!activeTouches[e.pointerId]) return;
+            const pos = getTouchPos(e);
+            activeTouches[e.pointerId] = pos;
+
+            if (joystick.active && pos.x < canvas.width / 2) {
+                joystick.currentX = pos.x;
+                joystick.currentY = pos.y;
+            }
+            if (aimStick.active && pos.x >= canvas.width / 2) {
+                aimStick.currentX = pos.x;
+                aimStick.currentY = pos.y;
+            }
+        });
+
+        canvas.addEventListener('pointerup', (e) => {
+            handlePointerEnd(e);
+        });
+        canvas.addEventListener('pointercancel', (e) => {
+            handlePointerEnd(e);
+        });
+
+        function handlePointerEnd(e) {
+            delete activeTouches[e.pointerId];
+            
+            // 왼쪽 영역 터치가 끝났을 때
+            if (joystick.active) {
+                let stillActive = false;
+                for (let id in activeTouches) {
+                    if (activeTouches[id].x < canvas.width / 2) stillActive = true;
+                }
+                if (!stillActive) joystick.active = false;
+            }
+
+            // 오른쪽 영역 터치가 끝났을 때 (손을 뗄 때 저격수 총알 발사!)
+            if (aimStick.active) {
+                let stillActive = false;
+                for (let id in activeTouches) {
+                    if (activeTouches[id].x >= canvas.width / 2) stillActive = true;
+                }
+                if (!stillActive && currentMode === 'aim' && ammo > 0) {
+                    // 에임 조이스틱 방향으로 저격 발사
+                    let dx = aimStick.currentX - aimStick.startX;
+                    let dy = aimStick.currentY - aimStick.startY;
+                    let dist = Math.hypot(dx, dy);
+
+                    if (dist > 10) { // 일정 거리 이상 끌었을 때만 발사
+                        let angle = Math.atan2(dy, dx);
+                        bullets.push({
+                            x: player.x,
+                            y: player.y,
+                            vx: Math.cos(angle) * 10, // 저격 탄환 속도 빠름
+                            vy: Math.sin(angle) * 10,
+                            radius: 6,
+                            distanceTraveled: 0,
+                            maxDistance: 350 // 저격 최대 사거리
+                        });
+                        ammo--;
+                    }
+                    aimStick.active = false;
                 }
             }
-            if (!hit) {
-                score = Math.max(0, score - 30); // 빗나감 펜널티
-            }
-        });
+        }
 
         function startGame(mode) {
             currentMode = mode;
@@ -168,11 +256,20 @@
             
             score = 0;
             lives = 3;
+            ammo = 3;
+            ammoRegenTimer = 0;
             player.x = canvas.width / 2;
             player.y = canvas.height / 2;
             entities = [];
+            bullets = [];
             spawnTimer = 0;
             gameRunning = true;
+
+            if (currentMode === 'dodge') {
+                guideText.innerText = "왼쪽 화면을 드래그해 사방에서 날아오는 탄환을 피하세요!";
+            } else {
+                guideText.innerText = "왼쪽: 이동 / 오른쪽: 드래그하여 조준 후 손을 떼면 저격 발사!";
+            }
 
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             gameLoop();
@@ -195,16 +292,37 @@
         }
 
         function update() {
-            // 플레이어 이동
-            if (keys.w && player.y - player.radius > 0) player.y -= player.speed;
-            if (keys.s && player.y + player.radius < canvas.height) player.y += player.speed;
-            if (keys.a && player.x - player.radius > 0) player.x -= player.speed;
-            if (keys.d && player.x + player.radius < canvas.width) player.x += player.speed;
+            // 조이스틱 기반 플레이어 이동 처리
+            if (joystick.active) {
+                let dx = joystick.currentX - joystick.startX;
+                let dy = joystick.currentY - joystick.startY;
+                let dist = Math.hypot(dx, dy);
+
+                if (dist > 2) {
+                    let angle = Math.atan2(dy, dx);
+                    let moveDist = Math.min(dist, joystick.maxDist) / joystick.maxDist * player.speed;
+                    player.x += Math.cos(angle) * moveDist;
+                    player.y += Math.sin(angle) * moveDist;
+
+                    // 화면 경계 제한
+                    player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+                    player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+                }
+            }
+
+            // 에임 모드 탄창 자동 충전 (브롤스타즈 시스템)
+            if (currentMode === 'aim' && ammo < 3) {
+                ammoRegenTimer++;
+                if (ammoRegenTimer >= 90) { // 약 1.5초마다 1발 충전
+                    ammo++;
+                    ammoRegenTimer = 0;
+                }
+            }
 
             spawnTimer++;
 
             if (currentMode === 'dodge') {
-                // 무빙 훈련: 주변에서 탄환 생성
+                // 무빙 훈련 패턴
                 if (spawnTimer % 35 === 0) {
                     let side = Math.floor(Math.random() * 4);
                     let x, y;
@@ -217,21 +335,18 @@
                     let speed = 2.5 + Math.random() * 1.5;
 
                     entities.push({
-                        x: x,
-                        y: y,
+                        x: x, y: y,
                         vx: Math.cos(angle) * speed,
                         vy: Math.sin(angle) * speed,
                         radius: 8
                     });
                 }
 
-                // 탄환 업데이트 및 충돌 체크
                 for (let i = entities.length - 1; i >= 0; i--) {
                     let b = entities[i];
                     b.x += b.vx;
                     b.y += b.vy;
 
-                    // 플레이어와 충돌
                     let dist = Math.hypot(player.x - b.x, player.y - b.y);
                     if (dist < player.radius + b.radius) {
                         entities.splice(i, 1);
@@ -240,29 +355,37 @@
                             alert(`게임 오버! 최종 점수: ${score}`);
                             returnToMenu();
                         }
-                    } 
-                    // 화면 밖으로 나가면 제거
-                    else if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+                    } else if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
                         entities.splice(i, 1);
                         score += 10;
                     }
                 }
 
             } else if (currentMode === 'aim') {
-                // 에임 훈련: 랜덤 위치에 표적 생성
-                if (spawnTimer % 60 === 0 && entities.length < 5) {
+                // 저격 에임 훈련: 움직이는 적(봇) 생성
+                if (spawnTimer % 75 === 0 && entities.length < 4) {
+                    let ex = Math.random() < 0.5 ? 50 : canvas.width - 50;
+                    let ey = Math.random() * (canvas.height - 100) + 50;
                     entities.push({
-                        x: Math.random() * (canvas.width - 60) + 30,
-                        y: Math.random() * (canvas.height - 60) + 30,
-                        radius: 20,
+                        x: ex, y: ey,
+                        vx: (Math.random() - 0.5) * 1.5,
+                        vy: (Math.random() - 0.5) * 1.5,
+                        radius: 18,
                         lifeTime: 0
                     });
                 }
 
-                // 표적 수명 체크 (시간 지나면 사라짐)
+                // 적 이동 및 생명 시간
                 for (let i = entities.length - 1; i >= 0; i--) {
-                    entities[i].lifeTime++;
-                    if (entities[i].lifeTime > 90) { // 약 1.5초 유지
+                    let target = entities[i];
+                    target.x += target.vx;
+                    target.y += target.vy;
+                    // 벽 반사
+                    if (target.x < 30 || target.x > canvas.width - 30) target.vx *= -1;
+                    if (target.y < 30 || target.y > canvas.height - 30) target.vy *= -1;
+
+                    target.lifeTime++;
+                    if (target.lifeTime > 240) { // 너무 오래 살아있으면 사라지고 생명 감소
                         entities.splice(i, 1);
                         lives--;
                         if (lives <= 0) {
@@ -271,10 +394,40 @@
                         }
                     }
                 }
+
+                // 플레이어가 쏜 저격 총알 업데이트
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    let bullet = bullets[i];
+                    bullet.x += bullet.vx;
+                    bullet.y += bullet.vy;
+                    bullet.distanceTraveled += Math.hypot(bullet.vx, bullet.vy);
+
+                    // 적과의 충돌 검사
+                    let hitIndex = -1;
+                    for (let j = 0; j < entities.length; j++) {
+                        let target = entities[j];
+                        if (Math.hypot(bullet.x - target.x, bullet.y - target.y) < bullet.radius + target.radius) {
+                            hitIndex = j;
+                            break;
+                        }
+                    }
+
+                    if (hitIndex !== -1) {
+                        entities.splice(hitIndex, 1);
+                        bullets.splice(i, 1);
+                        score += 150; // 저격 명중 점수
+                    } else if (bullet.distanceTraveled >= bullet.maxDistance || bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                        bullets.splice(i, 1); // 사거리 다 되면 소멸
+                    }
+                }
             }
 
-            // UI 업데이트
+            // UI 텍스트 갱신
             scoreBoard.innerText = `점수: ${score}`;
+            let ammoStrs = '';
+            for (let i = 0; i < 3; i++) ammoStrs += (i < ammo) ? '🟡' : '⚪';
+            ammoBoard.innerText = `탄창: ${ammoStrs}`;
+            
             let hearts = '';
             for (let i = 0; i < lives; i++) hearts += '❤️';
             lifeBoard.innerText = `생명: ${hearts}`;
@@ -283,7 +436,26 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 플레이어 그리기 (에임 모드에서는 미표시 또는 은은하게)
+            // 1. 저격 모드일 때 에임 가이드 라인 그리기 (파이퍼 조준선 느낌)
+            if (currentMode === 'aim' && aimStick.active) {
+                let dx = aimStick.currentX - aimStick.startX;
+                let dy = aimStick.currentY - aimStick.startY;
+                let dist = Math.hypot(dx, dy);
+                if (dist > 10) {
+                    let angle = Math.atan2(dy, dx);
+                    ctx.beginPath();
+                    ctx.moveTo(player.x, player.y);
+                    ctx.lineTo(player.x + Math.cos(angle) * 200, player.y + Math.sin(angle) * 200);
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.closePath();
+                }
+            }
+
+            // 2. 플레이어 그리기
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
@@ -293,7 +465,7 @@
             ctx.stroke();
             ctx.closePath();
 
-            // 엔티티(탄환 또는 표적) 그리기
+            // 3. 엔티티(탄환 또는 적) 그리기
             if (currentMode === 'dodge') {
                 for (let b of entities) {
                     ctx.beginPath();
@@ -303,6 +475,7 @@
                     ctx.closePath();
                 }
             } else if (currentMode === 'aim') {
+                // 표적(적) 그리기
                 for (let t of entities) {
                     ctx.beginPath();
                     ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
@@ -313,6 +486,64 @@
                     ctx.stroke();
                     ctx.closePath();
                 }
+
+                // 저격 탄환 그리기
+                for (let bullet of bullets) {
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffd700';
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+
+            // 4. 조이스틱 UI 시각화
+            if (joystick.active) {
+                // 베이스 원
+                ctx.beginPath();
+                ctx.arc(joystick.startX, joystick.startY, 35, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.stroke();
+                ctx.closePath();
+
+                // 스틱 손잡이
+                let dx = joystick.currentX - joystick.startX;
+                let dy = joystick.currentY - joystick.startY;
+                let dist = Math.hypot(dx, dy);
+                let stickX = joystick.startX + (dist > joystick.maxDist ? dx / dist * joystick.maxDist : dx);
+                let stickY = joystick.startY + (dist > joystick.maxDist ? dy / dist * joystick.maxDist : dy);
+
+                ctx.beginPath();
+                ctx.arc(stickX, stickY, 18, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            if (aimStick.active) {
+                // 에임 베이스 원
+                ctx.beginPath();
+                ctx.arc(aimStick.startX, aimStick.startY, 35, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(46, 213, 115, 0.15)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(46, 213, 115, 0.3)';
+                ctx.stroke();
+                ctx.closePath();
+
+                // 에임 스틱 손잡이
+                let dx = aimStick.currentX - aimStick.startX;
+                let dy = aimStick.currentY - aimStick.startY;
+                let dist = Math.hypot(dx, dy);
+                let stickX = aimStick.startX + (dist > 40 ? dx / dist * 40 : dx);
+                let stickY = aimStick.startY + (dist > 40 ? dy / dist * 40 : dy);
+
+                ctx.beginPath();
+                ctx.arc(stickX, stickY, 18, 0, rgba = 'rgba(46, 213, 115, 0.6)');
+                ctx.fillStyle = 'rgba(46, 213, 115, 0.6)';
+                ctx.fill();
+                ctx.closePath();
             }
         }
     </script>
