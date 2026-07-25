@@ -230,11 +230,11 @@
 
     <div id="menu">
         <h1>브롤스타즈 트레이닝 (디노)</h1>
-        <div class="subtitle">극한의 손가락 피지컬 및 고속 무빙 훈련 버전</div>
+        <div class="subtitle">손가락 피지컬 및 고속 무빙 훈련 버전</div>
         <div class="btn-group">
             <button class="main-btn btn-dodge" onclick="startGame('dodge')">무빙 훈련 (회피)</button>
             <button class="main-btn btn-aim" onclick="startGame('aim')">저격 에임 훈련 (일반)</button>
-            <button class="main-btn btn-hard" onclick="startGame('sniper_hard')">🎯 스나이퍼 하드모드 (극악 피지컬)</button>
+            <button class="main-btn btn-hard" onclick="startGame('sniper_hard')">🎯 스나이퍼 하드모드 (최적화 버전)</button>
         </div>
     </div>
 
@@ -290,7 +290,7 @@
         let gameTime = 0;
 
         function getDifficulty() {
-            return Math.min(4.5, 1 + score / 180);
+            return Math.min(3.5, 1 + score / 250);
         }
 
         let player = { x: 0, y: 0, radius: 18, speed: 5.0, color: '#1e90ff' };
@@ -370,7 +370,7 @@
 
                     if (dist > 12) {
                         let angle = Math.atan2(dy, dx);
-                        let bulletSpeed = currentMode === 'sniper_hard' ? 16 : 14;
+                        let bulletSpeed = currentMode === 'sniper_hard' ? 15 : 14;
                         bullets.push({
                             x: player.x,
                             y: player.y,
@@ -413,7 +413,7 @@
             } else if (currentMode === 'aim') {
                 guideText.innerText = "[저격 일반] 신속하고 정확한 에어밍 연습!";
             } else {
-                guideText.innerText = "[스나이퍼 하드모드] 고속 변칙 와리가리 피지컬 훈련!";
+                guideText.innerText = "[스나이퍼 하드모드] 쾌적하고 밸런스 잡힌 피지컬 훈련!";
             }
 
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -436,14 +436,14 @@
             let feedback = "";
             if (mode === 'sniper_hard') {
                 if (score < 400) {
-                    feedback = `[피지컬 분석: 하드모드 수련생]\n- 점수: ${score}점\n\n"변칙적인 AI의 무빙 타이밍에 손가락 반응이 조금 늦었습니다. 에임을 미리 고정하지 말고 드래그 스냅 속도를 높여보세요!"`;
+                    feedback = `[피지컬 분석: 하드모드 수련생]\n- 점수: ${score}점\n\n"조금 더 침착하게 에임을 리드하여 타겟의 이동 경로를 예측해 보세요."`;
                 } else if (score < 1000) {
-                    feedback = `[피지컬 분석: 하드모드 상위권]\n- 점수: ${score}점\n\n"훌륭한 손가락 반사 신경입니다! 고속 무빙을 추적하는 에임 스냅이 매우 날카로워졌습니다."`;
+                    feedback = `[피지컬 분석: 하드모드 상위권]\n- 점수: ${score}점\n\n"훌륭한 에임 스냅 감각입니다! 타겟의 움직임에 유연하게 대응하고 계시네요."`;
                 } else {
-                    feedback = `[피지컬 분석: 월드 챔피언 급 피지컬]\n- 점수: ${score}점\n\n"경이로운 반응 속도! 미친 듯이 도망치는 AI마저 완벽하게 도륙내는 최상위권 피지컬입니다!"`;
+                    feedback = `[피지컬 분석: 월드 챔피언 급 피지컬]\n- 점수: ${score}점\n\n"완벽한 에임과 반응 속도입니다. 하드모드의 밸런스를 완전히 지배하셨군요!"`;
                 }
             } else {
-                feedback = `[전투 피지컬 분석 완료]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"안정적인 무빙과 에임입니다. 더 높은 자극을 위해 하드모드에 도전해 손가락 한계에 부딪혀 보세요."`;
+                feedback = `[전투 피지컬 분석 완료]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"안정적인 무빙과 에임입니다. 쾌적해진 하드모드에서 손가락 피지컬을 더 단련해 보세요."`;
             }
             aiFeedbackText.innerText = feedback;
             aiModal.style.display = 'flex';
@@ -491,7 +491,7 @@
 
             if ((currentMode === 'aim' || currentMode === 'sniper_hard') && ammo < 3) {
                 ammoRegenTimer++;
-                if (ammoRegenTimer >= (currentMode === 'sniper_hard' ? 60 : 75)) {
+                if (ammoRegenTimer >= (currentMode === 'sniper_hard' ? 55 : 75)) {
                     ammo++;
                     ammoRegenTimer = 0;
                 }
@@ -532,8 +532,8 @@
                     }
                 }
             } else if (currentMode === 'aim' || currentMode === 'sniper_hard') {
-                const maxEntities = currentMode === 'sniper_hard' ? 4 : 5;
-                const spawnInterval = currentMode === 'sniper_hard' ? Math.max(12, Math.round(38 / difficulty)) : Math.max(18, Math.round(55 / difficulty));
+                const maxEntities = currentMode === 'sniper_hard' ? 3 : 5;
+                const spawnInterval = currentMode === 'sniper_hard' ? Math.max(18, Math.round(45 / difficulty)) : Math.max(18, Math.round(55 / difficulty));
                 
                 if (spawnCounter <= 0 && entities.length < maxEntities) {
                     spawnCounter = spawnInterval;
@@ -541,9 +541,9 @@
                     let ey = Math.random() * (canvas.height - 180) + 90;
                     entities.push({
                         x: ex, y: ey,
-                        vx: (Math.random() - 0.5) * 4,
-                        vy: (Math.random() - 0.5) * 4,
-                        radius: currentMode === 'sniper_hard' ? 14 : 18,
+                        vx: (Math.random() - 0.5) * 3,
+                        vy: (Math.random() - 0.5) * 3,
+                        radius: currentMode === 'sniper_hard' ? 16 : 18,
                         lifeTime: 0,
                         changeTimer: 0
                     });
@@ -554,9 +554,9 @@
                     
                     if (currentMode === 'sniper_hard') {
                         target.changeTimer++;
-                        // 극악 피지컬용 초고속 변칙 무빙 (방향 급 전환 및 가속)
-                        if (target.changeTimer > 15 + Math.random() * 12) {
-                            let speedBoost = (3.5 + Math.random() * 3.0) * difficulty;
+                        // 하드모드 속도를 부드럽고 눈에 보이게 완화 (과도하게 빠르지 않도록 조정)
+                        if (target.changeTimer > 35 + Math.random() * 20) {
+                            let speedBoost = (2.2 + Math.random() * 1.8) * difficulty;
                             let angle = Math.random() * Math.PI * 2;
                             target.vx = Math.cos(angle) * speedBoost;
                             target.vy = Math.sin(angle) * speedBoost;
@@ -571,7 +571,7 @@
                     if (target.y < 70 || target.y > canvas.height - 40) { target.vy *= -1; target.y = Math.max(70, Math.min(canvas.height - 40, target.y)); }
 
                     target.lifeTime++;
-                    let maxLife = currentMode === 'sniper_hard' ? 150 : 240;
+                    let maxLife = currentMode === 'sniper_hard' ? 220 : 240;
                     if (target.lifeTime > maxLife) {
                         entities.splice(i, 1);
                         lives--;
@@ -597,7 +597,7 @@
                     if (hitIndex !== -1) {
                         entities.splice(hitIndex, 1);
                         bullets.splice(i, 1);
-                        score += currentMode === 'sniper_hard' ? 300 : 150;
+                        score += currentMode === 'sniper_hard' ? 250 : 150;
                     } else if (bullet.distanceTraveled >= bullet.maxDistance || bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
                         bullets.splice(i, 1);
                     }
