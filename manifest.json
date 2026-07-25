@@ -1,0 +1,8 @@
+{
+  "name": "브롤스타즈 트레이닝",
+  "short_name": "브롤트레이닝",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f13",
+  "theme_color": "#0f0f13"
+}
