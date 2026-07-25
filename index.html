@@ -2,22 +2,23 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>브롤스타즈 트레이닝 사이트 (디노)</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
         html, body {
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a;
+            background-color: #121212;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
         }
         body {
@@ -27,65 +28,109 @@
             justify-content: center;
         }
         h1 {
-            margin: 5px 0;
-            font-size: 24px;
+            margin: 5px 0 10px 0;
+            font-size: 28px;
             color: #ffd700;
+            text-shadow: 2px 2px #000;
         }
-        #menu, #game-container {
+        p {
+            color: #dcdde1;
+        }
+        #menu {
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c2c54, #1b1464);
         }
         .btn-group {
             display: flex;
-            gap: 15px;
-            margin-top: 15px;
+            gap: 20px;
+            margin-top: 25px;
         }
         button {
-            padding: 12px 24px;
-            font-size: 16px;
+            padding: 16px 32px;
+            font-size: 18px;
             font-weight: bold;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: 0.2s;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+            transition: 0.15s;
         }
         .btn-dodge { background-color: #ff4757; color: white; }
         .btn-aim { background-color: #2ed573; color: white; }
-        .btn-back { background-color: #747d8c; color: white; margin-top: 10px; }
-        button:hover { opacity: 0.85; transform: scale(1.05); }
+        .btn-back {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            z-index: 10;
+        }
+        button:active { transform: scale(0.95); }
 
-        canvas {
+        /* 게임 컨테이너 및 캔버스 화면 꽉 채우기 */
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: none;
             background-color: #2f3542;
-            border: 4px solid #57606f;
-            border-radius: 12px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-            touch-action: none;
-            max-width: 96vw;
-            max-height: 72vh;
         }
-        #ui-panel {
-            display: flex;
-            justify-content: space-between;
+        #game-container.active {
+            display: block;
+        }
+        canvas {
+            display: block;
             width: 100%;
-            max-width: 900px;
-            padding: 0 6px;
-            margin-bottom: 8px;
-            font-size: 16px;
-            font-weight: bold;
+            height: 100%;
+            touch-action: none;
         }
-        #difficulty-board {
-            color: #ffa502;
+
+        /* 상단 브롤 스타일 HUD 오버레이 */
+        #ui-panel {
+            position: absolute;
+            top: 15px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px;
+            pointer-events: none;
+            z-index: 5;
+            font-size: 18px;
+            font-weight: 900;
+            text-shadow: 2px 2px 0px #000;
         }
+        .hud-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        #difficulty-board { color: #ffa502; }
+
+        .guide {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            text-shadow: 1px 1px #000;
+            pointer-events: none;
+            z-index: 5;
+        }
+
         .hidden {
             display: none !important;
-        }
-        .guide {
-            font-size: 13px;
-            color: #a4b0be;
-            margin-top: 5px;
-            text-align: center;
         }
 
         /* 세로 모드 안내 오버레이 */
@@ -104,14 +149,14 @@
             padding: 20px;
         }
         .rotate-icon {
-            font-size: 56px;
+            font-size: 64px;
             animation: rotatePulse 1.3s ease-in-out infinite;
         }
         @keyframes rotatePulse {
             0%, 100% { transform: rotate(0deg); }
             50% { transform: rotate(90deg); }
         }
-        @media screen and (orientation: portrait) and (max-width: 900px) {
+        @media screen and (orientation: portrait) and (max-width: 1024px) {
             #menu, #game-container { display: none !important; }
             .rotate-overlay { display: flex; }
         }
@@ -135,17 +180,17 @@
         </div>
     </div>
 
-    <!-- 게임 화면 -->
-    <div id="game-container" class="hidden">
+    <!-- 게임 화면 (전체 화면 꽉 참) -->
+    <div id="game-container">
+        <button class="btn-back" onclick="returnToMenu()">⬅ 메뉴</button>
         <div id="ui-panel">
-            <span id="score-board">점수: 0</span>
-            <span id="difficulty-board">속도: x1.0</span>
-            <span id="ammo-board">탄창: 🟡🟡🟡</span>
-            <span id="life-board">생명: ❤️❤️❤️</span>
+            <div class="hud-box" id="score-board">점수: 0</div>
+            <div class="hud-box" id="difficulty-board">속도: x1.0</div>
+            <div class="hud-box" id="ammo-board">탄창: 🟡🟡🟡</div>
+            <div class="hud-box" id="life-board">생명: ❤️❤️❤️</div>
         </div>
-        <canvas id="canvas" width="700" height="450"></canvas>
+        <canvas id="canvas"></canvas>
         <div class="guide" id="guide-text">화면 아무 곳이나 터치하면 그 자리에 조이스틱이 생깁니다!</div>
-        <button class="btn-back" onclick="returnToMenu()">메뉴로 돌아가기</button>
     </div>
 
     <script>
@@ -167,20 +212,18 @@
         let ammoRegenTimer = 0;
         let gameRunning = false;
 
-        // 점수에 따라 난이도(속도)가 점점 빨라짐 (최대 3배)
         function getDifficulty() {
             return Math.min(3.0, 1 + score / 300);
         }
 
         let player = {
-            x: 350,
-            y: 225,
-            radius: 16,
-            speed: 3.5,
+            x: 0,
+            y: 0,
+            radius: 20,
+            speed: 5,
             color: '#1e90ff'
         };
 
-        // 플로팅 조이스틱 (첫 번째 손가락: 이동)
         let joystick = {
             active: false,
             pointerId: null,
@@ -188,10 +231,9 @@
             startY: 0,
             currentX: 0,
             currentY: 0,
-            maxDist: 40
+            maxDist: 50
         };
 
-        // 플로팅 에임 스틱 (두 번째 손가락: 저격 조준 및 발사)
         let aimStick = {
             active: false,
             pointerId: null,
@@ -206,13 +248,18 @@
         let spawnCounter = 0;
         let activeTouches = {};
 
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+        });
+
         function getTouchPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
             return {
-                x: (e.clientX - rect.left) * scaleX,
-                y: (e.clientY - rect.top) * scaleY
+                x: e.clientX,
+                y: e.clientY
             };
         }
 
@@ -221,7 +268,6 @@
             const pos = getTouchPos(e);
             activeTouches[e.pointerId] = pos;
 
-            // 첫 번째 터치 = 이동 조이스틱 (화면 어디서든 생성)
             if (!joystick.active) {
                 joystick.active = true;
                 joystick.pointerId = e.pointerId;
@@ -230,7 +276,6 @@
                 joystick.currentX = pos.x;
                 joystick.currentY = pos.y;
             } 
-            // 두 번째 터치 = 저격 에임 조이스틱 (에임 모드일 때만 활성화)
             else if (currentMode === 'aim' && !aimStick.active && ammo > 0 && e.pointerId !== joystick.pointerId) {
                 aimStick.active = true;
                 aimStick.pointerId = e.pointerId;
@@ -268,23 +313,22 @@
                 joystick.pointerId = null;
             }
 
-            // 에임 스틱에서 손을 뗄 때 저격 총알 발사!
             if (aimStick.active && e.pointerId === aimStick.pointerId) {
                 if (currentMode === 'aim' && ammo > 0) {
                     let dx = aimStick.currentX - aimStick.startX;
                     let dy = aimStick.currentY - aimStick.startY;
                     let dist = Math.hypot(dx, dy);
 
-                    if (dist > 10) {
+                    if (dist > 15) {
                         let angle = Math.atan2(dy, dx);
                         bullets.push({
                             x: player.x,
                             y: player.y,
-                            vx: Math.cos(angle) * 10,
-                            vy: Math.sin(angle) * 10,
-                            radius: 6,
+                            vx: Math.cos(angle) * 14,
+                            vy: Math.sin(angle) * 14,
+                            radius: 8,
                             distanceTraveled: 0,
-                            maxDistance: 350
+                            maxDistance: Math.max(canvas.width, canvas.height) * 0.7
                         });
                         ammo--;
                     }
@@ -294,26 +338,10 @@
             }
         }
 
-        function resizeCanvas() {
-            const aspect = 450 / 700;
-            let w = Math.min(900, window.innerWidth * 0.96);
-            let h = w * aspect;
-            const maxH = window.innerHeight * 0.7;
-            if (h > maxH) {
-                h = maxH;
-                w = h / aspect;
-            }
-            canvas.width = Math.round(w);
-            canvas.height = Math.round(h);
-        }
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('orientationchange', resizeCanvas);
-        resizeCanvas();
-
         function startGame(mode) {
             currentMode = mode;
             menu.classList.add('hidden');
-            gameContainer.classList.remove('hidden');
+            gameContainer.classList.add('active');
 
             resizeCanvas();
 
@@ -329,9 +357,9 @@
             gameRunning = true;
 
             if (currentMode === 'dodge') {
-                guideText.innerText = "[무빙 훈련] 화면 어디든 터치하고 드래그해 탄환을 피하세요! 점수가 오를수록 속도가 빨라집니다.";
+                guideText.innerText = "[무빙 훈련] 화면 어디든 터치하고 드래그해 탄환을 피하세요!";
             } else {
-                guideText.innerText = "[저격 에임 훈련] 한 손가락으로 이동, 다른 손가락으로 당겼다 놓으면 저격 발사!";
+                guideText.innerText = "[저격 에임 훈련] 한 손가락 이동, 다른 손가락 에임 조준 후 놓아서 발사!";
             }
 
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -341,7 +369,7 @@
         function returnToMenu() {
             gameRunning = false;
             cancelAnimationFrame(animationFrameId);
-            gameContainer.classList.add('hidden');
+            gameContainer.classList.remove('active');
             menu.classList.remove('hidden');
         }
 
@@ -355,7 +383,6 @@
         function update() {
             const difficulty = getDifficulty();
 
-            // 이동 조이스틱 제어
             if (joystick.active) {
                 let dx = joystick.currentX - joystick.startX;
                 let dy = joystick.currentY - joystick.startY;
@@ -368,11 +395,10 @@
                     player.y += Math.sin(angle) * moveDist;
 
                     player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
-                    player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+                    player.y = Math.max(player.radius + 60, Math.min(canvas.height - player.radius, player.y));
                 }
             }
 
-            // 브롤스타즈 탄창 자동 충전 시스템
             if (currentMode === 'aim' && ammo < 3) {
                 ammoRegenTimer++;
                 if (ammoRegenTimer >= 90) {
@@ -384,7 +410,7 @@
             spawnCounter--;
 
             if (currentMode === 'dodge') {
-                const spawnInterval = Math.max(12, Math.round(35 / difficulty));
+                const spawnInterval = Math.max(10, Math.round(30 / difficulty));
                 if (spawnCounter <= 0) {
                     spawnCounter = spawnInterval;
                     let side = Math.floor(Math.random() * 4);
@@ -395,9 +421,9 @@
                     else { x = canvas.width; y = Math.random() * canvas.height; }
 
                     let angle = Math.atan2(player.y - y, player.x - x);
-                    let speed = (2.5 + Math.random() * 1.5) * difficulty;
+                    let speed = (3 + Math.random() * 2) * difficulty;
 
-                    entities.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, radius: 8 });
+                    entities.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, radius: 10 });
                 }
 
                 for (let i = entities.length - 1; i >= 0; i--) {
@@ -410,26 +436,26 @@
                         entities.splice(i, 1);
                         lives--;
                         if (lives <= 0) {
-                            alert(`게임 오버! 최종 점수: ${score}`);
+                            alert(`디노 트레이닝 게임 오버! 최종 점수: ${score}`);
                             returnToMenu();
                         }
-                    } else if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+                    } else if (b.x < -50 || b.x > canvas.width + 50 || b.y < -50 || b.y > canvas.height + 50) {
                         entities.splice(i, 1);
                         score += 10;
                     }
                 }
 
             } else if (currentMode === 'aim') {
-                const spawnInterval = Math.max(30, Math.round(75 / difficulty));
-                if (spawnCounter <= 0 && entities.length < 4) {
+                const spawnInterval = Math.max(25, Math.round(65 / difficulty));
+                if (spawnCounter <= 0 && entities.length < 5) {
                     spawnCounter = spawnInterval;
-                    let ex = Math.random() < 0.5 ? 50 : canvas.width - 50;
-                    let ey = Math.random() * (canvas.height - 100) + 50;
+                    let ex = Math.random() < 0.5 ? 80 : canvas.width - 80;
+                    let ey = Math.random() * (canvas.height - 200) + 100;
                     entities.push({
                         x: ex, y: ey,
-                        vx: (Math.random() - 0.5) * 1.5 * difficulty,
-                        vy: (Math.random() - 0.5) * 1.5 * difficulty,
-                        radius: 18,
+                        vx: (Math.random() - 0.5) * 2 * difficulty,
+                        vy: (Math.random() - 0.5) * 2 * difficulty,
+                        radius: 22,
                         lifeTime: 0
                     });
                 }
@@ -438,15 +464,15 @@
                     let target = entities[i];
                     target.x += target.vx;
                     target.y += target.vy;
-                    if (target.x < 30 || target.x > canvas.width - 30) target.vx *= -1;
-                    if (target.y < 30 || target.y > canvas.height - 30) target.vy *= -1;
+                    if (target.x < 50 || target.x > canvas.width - 50) target.vx *= -1;
+                    if (target.y < 80 || target.y > canvas.height - 50) target.vy *= -1;
 
                     target.lifeTime++;
-                    if (target.lifeTime > 240) {
+                    if (target.lifeTime > 280) {
                         entities.splice(i, 1);
                         lives--;
                         if (lives <= 0) {
-                            alert(`게임 오버! 최종 점수: ${score}`);
+                            alert(`디노 트레이닝 게임 오버! 최종 점수: ${score}`);
                             returnToMenu();
                         }
                     }
@@ -477,7 +503,6 @@
                 }
             }
 
-            // UI 업데이트
             scoreBoard.innerText = `점수: ${score}`;
             difficultyBoard.innerText = `속도: x${difficulty.toFixed(1)}`;
             let ammoStrs = '';
@@ -492,36 +517,47 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 저격 조준선 가이드라인
+            // 배경 격자 패턴 그리기 (맵 느낌)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 1;
+            let gridSize = 60;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // 에임 조준선 가이드라인
             if (currentMode === 'aim' && aimStick.active) {
                 let dx = aimStick.currentX - aimStick.startX;
                 let dy = aimStick.currentY - aimStick.startY;
                 let dist = Math.hypot(dx, dy);
-                if (dist > 10) {
+                if (dist > 15) {
                     let angle = Math.atan2(dy, dx);
                     ctx.beginPath();
                     ctx.moveTo(player.x, player.y);
-                    ctx.lineTo(player.x + Math.cos(angle) * 200, player.y + Math.sin(angle) * 200);
-                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
-                    ctx.lineWidth = 3;
-                    ctx.setLineDash([5, 5]);
+                    ctx.lineTo(player.x + Math.cos(angle) * 300, player.y + Math.sin(angle) * 300);
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+                    ctx.lineWidth = 4;
+                    ctx.setLineDash([8, 6]);
                     ctx.stroke();
                     ctx.setLineDash([]);
                     ctx.closePath();
                 }
             }
 
-            // 플레이어
+            // 플레이어 캐릭터
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
             ctx.fill();
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.strokeStyle = '#ffffff';
             ctx.stroke();
             ctx.closePath();
 
-            // 오브젝트들
+            // 오브젝트 렌더링
             if (currentMode === 'dodge') {
                 for (let b of entities) {
                     ctx.beginPath();
@@ -550,10 +586,10 @@
                 }
             }
 
-            // 이동 조이스틱 시각화 (플로팅)
+            // 이동 조이스틱 표시
             if (joystick.active) {
                 ctx.beginPath();
-                ctx.arc(joystick.startX, joystick.startY, 35, 0, Math.PI * 2);
+                ctx.arc(joystick.startX, joystick.startY, 45, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
                 ctx.fill();
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
@@ -567,16 +603,16 @@
                 let stickY = joystick.startY + (dist > joystick.maxDist ? dy / dist * joystick.maxDist : dy);
 
                 ctx.beginPath();
-                ctx.arc(stickX, stickY, 18, 0, Math.PI * 2);
+                ctx.arc(stickX, stickY, 22, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
                 ctx.fill();
                 ctx.closePath();
             }
 
-            // 에임 조이스틱 시각화 (플로팅)
+            // 에임 조이스틱 표시
             if (aimStick.active) {
                 ctx.beginPath();
-                ctx.arc(aimStick.startX, aimStick.startY, 35, 0, Math.PI * 2);
+                ctx.arc(aimStick.startX, aimStick.startY, 45, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(46, 213, 115, 0.15)';
                 ctx.fill();
                 ctx.strokeStyle = 'rgba(46, 213, 115, 0.3)';
@@ -586,11 +622,11 @@
                 let dx = aimStick.currentX - aimStick.startX;
                 let dy = aimStick.currentY - aimStick.startY;
                 let dist = Math.hypot(dx, dy);
-                let stickX = aimStick.startX + (dist > 40 ? dx / dist * 40 : dx);
-                let stickY = aimStick.startY + (dist > 40 ? dy / dist * 40 : dy);
+                let stickX = aimStick.startX + (dist > 50 ? dx / dist * 50 : dx);
+                let stickY = aimStick.startY + (dist > 50 ? dy / dist * 50 : dy);
 
                 ctx.beginPath();
-                ctx.arc(stickX, stickY, 18, 0, Math.PI * 2);
+                ctx.arc(stickX, stickY, 22, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(46, 213, 115, 0.6)';
                 ctx.fill();
                 ctx.closePath();
