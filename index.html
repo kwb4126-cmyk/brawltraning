@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>브롤스타즈 트레이닝 사이트 (디노)</title>
+    <title>브롤스타즈 트레이닝 (디노)</title>
+    
+    <!-- 모바일 주소창 숨기기 및 앱 전체화면 설정 (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f0f13">
+    
     <style>
         * {
             box-sizing: border-box;
@@ -71,7 +77,7 @@
         .btn-aim { background: linear-gradient(135deg, #2ed573, #7bed9f); }
         .main-btn:active { transform: scale(0.96); }
 
-        /* 게임 창 외부 여백(테두리) 스타일 적용 */
+        /* 게임 창 */
         #game-container {
             position: relative;
             width: 94vw;
@@ -97,7 +103,7 @@
             background-color: #2f3542;
         }
 
-        /* 개선된 상단 UI 패널 */
+        /* 상단 UI 패널 */
         #ui-panel {
             position: absolute;
             top: 15px;
@@ -157,12 +163,12 @@
             z-index: 5;
         }
 
-        /* AI 피드백 모달 오버레이 스타일 */
+        /* 브롤 전용 내장 AI 피드백 모달 */
         #ai-modal {
             position: absolute;
             inset: 0;
-            background: rgba(11, 19, 43, 0.85);
-            backdrop-filter: blur(8px);
+            background: rgba(11, 19, 43, 0.88);
+            backdrop-filter: blur(10px);
             display: none;
             flex-direction: column;
             align-items: center;
@@ -173,28 +179,31 @@
         }
         .ai-card {
             background: #1e272e;
-            border: 3px solid #ff4757;
+            border: 3px solid #ffd700;
             border-radius: 20px;
             padding: 25px 30px;
-            max-width: 420px;
+            max-width: 460px;
             width: 100%;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
         .ai-title {
-            color: #ff4757;
-            font-size: 22px;
+            color: #ffd700;
+            font-size: 21px;
             font-weight: 900;
             margin-bottom: 12px;
         }
         .ai-content {
-            font-size: 15px;
+            font-size: 14px;
             line-height: 1.6;
             color: #f1f2f6;
             margin-bottom: 24px;
-            background: rgba(0,0,0,0.3);
-            padding: 14px;
-            border-radius: 10px;
-            border-left: 4px solid #ff4757;
+            background: rgba(0,0,0,0.4);
+            padding: 16px;
+            border-radius: 12px;
+            border-left: 4px solid #ffd700;
+            text-align: left;
+            max-height: 220px;
+            overflow-y: auto;
         }
         .ai-btn-group {
             display: flex;
@@ -219,15 +228,15 @@
 
     <!-- 메인 메뉴 -->
     <div id="menu">
-        <h1>브롤스타즈 트레이닝 사이트 (디노)</h1>
-        <div class="subtitle">실전 감각을 극대화하는 맞춤형 트레이너</div>
+        <h1>브롤스타즈 트레이닝 (디노)</h1>
+        <div class="subtitle">브롤 전용 내장 AI 코칭 시스템 활성화 완료!</div>
         <div class="btn-group">
             <button class="main-btn btn-dodge" onclick="startGame('dodge')">무빙 훈련 (회피)</button>
             <button class="main-btn btn-aim" onclick="startGame('aim')">저격 에임 훈련 (사격)</button>
         </div>
     </div>
 
-    <!-- 게임 화면 (테두리가 있는 창 형태) -->
+    <!-- 게임 화면 -->
     <div id="game-container">
         <button class="btn-back" onclick="returnToMenu()">메뉴로</button>
         
@@ -245,11 +254,11 @@
         <canvas id="canvas"></canvas>
         <div class="guide" id="guide-text">조작 가이드</div>
 
-        <!-- AI 피드백 모달 -->
+        <!-- 브롤 전용 AI 피드백 모달 -->
         <div id="ai-modal">
             <div class="ai-card">
-                <div class="ai-title">🤖 디노 AI 코치 분석 보고서</div>
-                <div class="ai-content" id="ai-feedback-text">분석 중...</div>
+                <div class="ai-title">🤖 브롤스타즈 AI 전용 코치</div>
+                <div class="ai-content" id="ai-feedback-text">전투 데이터를 분석 중입니다...</div>
                 <div class="ai-btn-group">
                     <button class="ai-btn btn-retry" onclick="restartGame()">다시 도전</button>
                     <button class="ai-btn btn-home" onclick="returnToMenu()">메뉴로</button>
@@ -278,7 +287,7 @@
         let ammo = 3;
         let ammoRegenTimer = 0;
         let gameRunning = false;
-        let gameTime = 0; // 생존 시간 측정용
+        let gameTime = 0;
 
         function getDifficulty() {
             return Math.min(3.5, 1 + score / 250);
@@ -292,7 +301,6 @@
             color: '#1e90ff'
         };
 
-        // 이동 조이스틱
         let joystick = {
             active: false,
             pointerId: null,
@@ -303,7 +311,6 @@
             maxDist: 45
         };
 
-        // 저격 에임 스틱
         let aimStick = {
             active: false,
             pointerId: null,
@@ -330,23 +337,24 @@
             const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
             activeTouches[e.pointerId] = pos;
 
-            // 무빙 모드이거나, 저격 모드에서 첫 터치인 경우 -> 이동 조이스틱 생성
-            if (!joystick.active) {
-                joystick.active = true;
-                joystick.pointerId = e.pointerId;
-                joystick.startX = pos.x;
-                joystick.startY = pos.y;
-                joystick.currentX = pos.x;
-                joystick.currentY = pos.y;
-            } 
-            // 저격 모드이고 이동 스틱이 이미 있는 상태라면 -> 두 번째 손가락으로 에임 스틱 생성 (저격 모드선 이동 불가!)
-            else if (currentMode === 'aim' && !aimStick.active && ammo > 0 && e.pointerId !== joystick.pointerId) {
-                aimStick.active = true;
-                aimStick.pointerId = e.pointerId;
-                aimStick.startX = pos.x;
-                aimStick.startY = pos.y;
-                aimStick.currentX = pos.x;
-                aimStick.currentY = pos.y;
+            if (currentMode === 'dodge') {
+                if (!joystick.active) {
+                    joystick.active = true;
+                    joystick.pointerId = e.pointerId;
+                    joystick.startX = pos.x;
+                    joystick.startY = pos.y;
+                    joystick.currentX = pos.x;
+                    joystick.currentY = pos.y;
+                }
+            } else if (currentMode === 'aim') {
+                if (!aimStick.active && ammo > 0) {
+                    aimStick.active = true;
+                    aimStick.pointerId = e.pointerId;
+                    aimStick.startX = pos.x;
+                    aimStick.startY = pos.y;
+                    aimStick.currentX = pos.x;
+                    aimStick.currentY = pos.y;
+                }
             }
         });
 
@@ -426,7 +434,7 @@
             if (currentMode === 'dodge') {
                 guideText.innerText = "[무빙 훈련] 화면을 드래그해 사방에서 날아오는 탄환을 회피하세요!";
             } else {
-                guideText.innerText = "[저격 에임 훈련] 조준 시 제자리 고정! 드래그 후 손을 떼어 저격 발사!";
+                guideText.innerText = "[저격 에임 훈련] 제자리 고정! 화면을 드래그한 후 손을 떼어 저격 발사!";
             }
 
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -445,30 +453,40 @@
             menu.classList.remove('hidden');
         }
 
+        function generateBrawlAIFeedback(mode, score, survivalSeconds) {
+            let feedback = "";
+            
+            if (mode === 'dodge') {
+                if (score < 100) {
+                    feedback = `[AI 분석 결과: 브론즈 구간]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"어이쿠! 적의 평타를 일직선으로 맞아버렸네요. 맵의 넓은 공간을 활용하지 못하고 구석으로 몰리는 버릇이 있어요. 상대 탄환이 날아오는 궤도를 보고 무빙 스틱을 대각선으로 살짝 꺾는 '와리가리 무빙'을 연습해 보세요!"`;
+                } else if (score < 350) {
+                    feedback = `[AI 분석 결과: 다이아몬드 구간]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"나쁘지 않은 무빙 감각이에요! 하지만 후반부에 속도가 빨라질 때 당황해서 동선이 좁아지는 게 패인입니다. 조금 더 여유를 갖고 넓은 원을 그리며 도망쳐보세요."`;
+                } else {
+                    feedback = `[AI 분석 결과: 마스터/그랜드마스터 구간]\n- 점수: ${score}점 (생존: ${survivalSeconds}초)\n\n"와, 미친 반응 속도인데요?! 이 정도면 프로 챔피언십 나가셔도 되겠습니다. 완벽한 회피 기동이었어요!"`;
+                }
+            } else {
+                if (score < 250) {
+                    feedback = `[AI 분석 결과: 에임 초보]\n- 점수: ${score}점\n\n"아쉽습니다! 제자리에 가만히 서서 쏘려다 보니 적에게 노출되었네요. 적의 이동 예측샷(리드 샷) 감각을 익히고, 탄환이 없을 때 무리하게 나가지 않는 탄창 관리(재장전 타이밍)를 신경 쓰세요!"`;
+                } else {
+                    feedback = `[AI 분석 결과: 저격수 장인]\n- 점수: ${score}점\n\n"캬, 백발백중 저격 실력이네요! 적의 무빙 예측과 깔끔한 플릭 샷이 아주 환상적이었습니다. 파이퍼나 파이크 유저로 합격!"`;
+                }
+            }
+
+            aiFeedbackText.innerText = feedback;
+            aiModal.style.display = 'flex';
+        }
+
         function triggerGameOver() {
             gameRunning = false;
             cancelAnimationFrame(animationFrameId);
+            const survivalSeconds = Math.floor(gameTime / 60);
             
-            // 디노 AI 코치의 맞춤형 피드백 생성
-            let feedback = "";
-            if (currentMode === 'dodge') {
-                if (score < 100) {
-                    feedback = `생존 시간 약 ${Math.floor(gameTime/60)}초, 점수 ${score}점.\n탄환이 집중될 때 한쪽 방향으로만 무빙하면 위험합니다. 불규칙한 무빙과 무빙 폭을 좁게 가져가는 연습을 해보세요!`;
-                } else if (score < 400) {
-                    feedback = `생존 시간 약 ${Math.floor(gameTime/60)}초, 점수 ${score}점.\n상당한 회피 능력을 보여주셨네요! 난이도가 급증하는 후반 구간에서 동선을 더 넓게 확보하면 고득점이 가능합니다.`;
-                } else {
-                    feedback = `생존 시간 약 ${Math.floor(gameTime/60)}초, 점수 ${score}점.\n완벽한 무빙 실력입니다! 프로 브롤러 수준의 회피 기동을 보여주셨습니다. 브이아이피 등극 수준!`;
-                }
-            } else {
-                if (score < 300) {
-                    feedback = `달성 점수 ${score}점.\n저격 모드에서는 에임을 맞추는 동안 캐릭터가 멈추므로 적의 위치를 미리 예측하고 신속하게  flick shot(플릭 샷)을 날리는 연습이 필요합니다.`;
-                } else {
-                    feedback = `달성 점수 ${score}점.\n훌륭한 에임 적중률입니다! 탄창 관리와 정교한 각도 조절 능력이 아주 뛰어납니다.`;
-                }
-            }
-            
-            aiFeedbackText.innerText = feedback;
+            aiFeedbackText.innerText = "브롤 AI 코치가 당신의 매치 리플레이를 분석 중입니다...";
             aiModal.style.display = 'flex';
+            
+            setTimeout(() => {
+                generateBrawlAIFeedback(currentMode, score, survivalSeconds);
+            }, 700);
         }
 
         function gameLoop() {
@@ -482,8 +500,7 @@
         function update() {
             const difficulty = getDifficulty();
 
-            // 저격 모드(aim)일 때는 에임 스틱을 당기는 동안 이동을 강제로 차단함
-            if (joystick.active && !(currentMode === 'aim' && aimStick.active)) {
+            if (currentMode === 'dodge' && joystick.active) {
                 let dx = joystick.currentX - joystick.startX;
                 let dy = joystick.currentY - joystick.startY;
                 let dist = Math.hypot(dx, dy);
@@ -617,7 +634,6 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 맵 배경 격자 패턴
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
             ctx.lineWidth = 1;
             let gridSize = 50;
@@ -628,7 +644,6 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // 에임 조준선 가이드라인 (저격 모드에서 정지 상태 시 시각화)
             if (currentMode === 'aim' && aimStick.active) {
                 let dx = aimStick.currentX - aimStick.startX;
                 let dy = aimStick.currentY - aimStick.startY;
@@ -647,7 +662,6 @@
                 }
             }
 
-            // 플레이어 캐릭터
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = (currentMode === 'aim' && aimStick.active) ? '#70a1ff' : player.color;
@@ -657,7 +671,6 @@
             ctx.stroke();
             ctx.closePath();
 
-            // 오브젝트 및 탄환 렌더링
             if (currentMode === 'dodge') {
                 for (let b of entities) {
                     ctx.beginPath();
@@ -686,8 +699,7 @@
                 }
             }
 
-            // 이동 조이스틱 시각화
-            if (joystick.active) {
+            if (currentMode === 'dodge' && joystick.active) {
                 ctx.beginPath();
                 ctx.arc(joystick.startX, joystick.startY, 42, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
@@ -709,8 +721,7 @@
                 ctx.closePath();
             }
 
-            // 에임 조이스틱 시각화
-            if (aimStick.active) {
+            if (currentMode === 'aim' && aimStick.active) {
                 ctx.beginPath();
                 ctx.arc(aimStick.startX, aimStick.startY, 42, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(46, 213, 115, 0.12)';
@@ -726,8 +737,6 @@
                 let stickY = aimStick.startY + (dist > 45 ? dy / dist * 45 : dy);
 
                 ctx.beginPath();
-                ctx.arc(aimStick.X || stickX, stickY, 20, 0, Math.PI * 2);
-                // 실시간 렌더링용 위치 적용
                 ctx.arc(stickX, stickY, 20, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(46, 213, 115, 0.55)';
                 ctx.fill();
